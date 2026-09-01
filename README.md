@@ -18,6 +18,11 @@ Para generar una versión de producción:
 npm run build
 ```
 
+La versión de producción es una PWA instalable: incluye manifest, íconos de la
+propuesta de la bandera y un service worker para abrir el juego sin conexión
+después de la primera visita. La instalación se ofrece desde el menú del
+navegador cuando el dispositivo lo permite.
+
 ## Publicación en GitHub Pages
 
 El flujo [`.github/workflows/deploy-pages.yml`](.github/workflows/deploy-pages.yml)

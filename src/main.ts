@@ -1,5 +1,8 @@
 import './styles/main.css';
 import { Game } from './game/Game';
+import { registerServiceWorker } from './pwa';
+
+registerServiceWorker();
 
 const root = document.querySelector<HTMLDivElement>('#game-root');
 
