@@ -40,6 +40,9 @@ export class Fan {
 
   public applyTo(marble: RAPIER.RigidBody): void {
     const direction = this.definition.direction === 'right' ? 1 : -1;
+    const velocity = marble.linvel();
+    const maxSpeed = this.definition.maxSpeed;
+    if (maxSpeed !== undefined && direction * velocity.x >= maxSpeed) return;
     marble.addForce({ x: direction * this.definition.force, y: this.definition.lift ?? 0, z: 0 }, true);
   }
 

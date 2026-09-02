@@ -113,15 +113,17 @@ function validateTrampoline(value: { launchSpeed?: unknown; id?: unknown; positi
   if (value?.launchSpeed !== undefined && !isPositiveNumber(value.launchSpeed)) issues.push(`${label}.launchSpeed must be greater than zero`);
 }
 
-function validateConveyor(value: { speed?: unknown; id?: unknown; position?: unknown; size?: unknown }, label: string, issues: string[]): void {
+function validateConveyor(value: { speed?: unknown; maxSpeed?: unknown; id?: unknown; position?: unknown; size?: unknown }, label: string, issues: string[]): void {
   validateSurface(value, label, issues);
   if (!isFiniteNumber(value?.speed) || value.speed === 0) issues.push(`${label}.speed must be a non-zero finite number`);
+  if (value?.maxSpeed !== undefined && !isPositiveNumber(value.maxSpeed)) issues.push(`${label}.maxSpeed must be greater than zero`);
 }
 
-function validateFan(value: { direction?: unknown; force?: unknown; lift?: unknown; id?: unknown; position?: unknown; size?: unknown }, label: string, issues: string[]): void {
+function validateFan(value: { direction?: unknown; force?: unknown; maxSpeed?: unknown; lift?: unknown; id?: unknown; position?: unknown; size?: unknown }, label: string, issues: string[]): void {
   validateSurface(value, label, issues);
   if (value?.direction !== 'left' && value?.direction !== 'right') issues.push(`${label}.direction must be left or right`);
   if (!isPositiveNumber(value?.force)) issues.push(`${label}.force must be greater than zero`);
+  if (value?.maxSpeed !== undefined && !isPositiveNumber(value.maxSpeed)) issues.push(`${label}.maxSpeed must be greater than zero`);
   if (value?.lift !== undefined) validateFiniteNumber(value.lift, `${label}.lift`, issues);
 }
 

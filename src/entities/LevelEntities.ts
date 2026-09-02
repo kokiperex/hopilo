@@ -11,6 +11,7 @@ import { Trampoline } from './Trampoline';
 import { Conveyor } from './Conveyor';
 import { Fan } from './Fan';
 import { Hammer } from './Hammer';
+import { WaterSplash } from './WaterSplash';
 import type { PhysicsEntity } from './types';
 
 export interface LevelEvents {
@@ -34,6 +35,7 @@ export class LevelEntities {
   private readonly gems: GemItem[];
   private readonly checkpoints: CheckpointItem[];
   private readonly hazards: HazardItem[];
+  private readonly waterSplashes: WaterSplash[] = [];
   private readonly goal: GoalItem;
   private respawnPosition: THREE.Vector3;
   private collectedGems = 0;
@@ -42,7 +44,7 @@ export class LevelEntities {
   private complete = false;
   private elapsedSeconds = 0;
 
-  public constructor(scene: THREE.Scene, private readonly physics: PhysicsWorld, private readonly level: LevelDefinition, private readonly events: LevelEvents) {
+  public constructor(private readonly scene: THREE.Scene, private readonly physics: PhysicsWorld, private readonly level: LevelDefinition, private readonly events: LevelEvents) {
     this.platforms = [...level.platforms, ...level.ramps].map((definition) => new Platform(physics, definition));
     this.movingPlatforms = level.movingPlatforms.map((definition) => new MovingPlatform(physics, definition));
     this.trampolines = level.trampolines.map((definition) => new Trampoline(physics, definition));
@@ -102,6 +104,10 @@ export class LevelEntities {
     this.goal.celebration = Math.max(0, this.goal.celebration - 1 / 42);
     const goalScale = 1 + this.goal.celebration * 0.18;
     this.goal.mesh.scale.set(goalScale, goalScale, goalScale);
+    this.waterSplashes.forEach((splash) => splash.update(1 / 60));
+    const expiredSplashes = this.waterSplashes.filter((splash) => splash.finished);
+    expiredSplashes.forEach((splash) => splash.dispose());
+    this.waterSplashes.splice(0, this.waterSplashes.length, ...this.waterSplashes.filter((splash) => !splash.finished));
   }
 
   public restart(): void {
@@ -125,6 +131,7 @@ export class LevelEntities {
     this.trampolines.forEach((trampoline) => trampoline.dispose());
     this.conveyors.forEach((conveyor) => conveyor.dispose());
     this.fans.forEach((fan) => fan.dispose());
+    this.waterSplashes.forEach((splash) => splash.dispose());
     [...this.gems, ...this.checkpoints, ...this.hazards, this.goal].forEach((item) => {
       this.physics.removeBody(item.body);
       disposeObject(item.mesh);
@@ -148,8 +155,9 @@ export class LevelEntities {
       this.respawnPosition.copy(checkpoint.definition.respawn);
       this.events.onCheckpoint();
     });
-    const inHazard = this.hazards.some((hazard) => this.physics.world.intersectionPair(this.marble.collider, hazard.collider));
-    if (this.restartCooldown === 0 && (inHazard || this.marble.body.translation().y < this.level.fallResetY)) {
+    const intersectingHazard = this.hazards.find((hazard) => this.physics.world.intersectionPair(this.marble.collider, hazard.collider));
+    if (this.restartCooldown === 0 && (intersectingHazard || this.marble.body.translation().y < this.level.fallResetY)) {
+      if (this.level.world === 'beach' && intersectingHazard?.definition.kind === 'water') this.addWaterSplash(intersectingHazard);
       this.marble.reactToHazard();
       this.events.onHazard();
       this.restart();
@@ -176,6 +184,14 @@ export class LevelEntities {
     this.fans.forEach((fan) => {
       if (this.physics.world.intersectionPair(this.marble.collider, fan.collider)) fan.applyTo(this.marble.body);
     });
+  }
+
+  private addWaterSplash(hazard: HazardItem): void {
+    const marblePosition = this.marble.body.translation();
+    const surfaceY = hazard.definition.position.y + hazard.definition.size.y / 2 + 0.04;
+    const splash = new WaterSplash(new THREE.Vector3(marblePosition.x, surfaceY, marblePosition.z));
+    this.waterSplashes.push(splash);
+    this.scene.add(splash.mesh);
   }
 
   private isTouching(collider: import('@dimforge/rapier3d-compat').Collider): boolean {

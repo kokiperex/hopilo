@@ -80,6 +80,8 @@ export interface TrampolineDefinition extends SurfaceDefinition {
 export interface ConveyorDefinition extends SurfaceDefinition {
   /** Horizontal speed in world metres per second; negative values move left. */
   speed: number;
+  /** Maximum horizontal speed the belt can give the marble. */
+  maxSpeed?: number;
 }
 
 /** A visible air current. Its box is a sensor, never a solid wall. */
@@ -87,6 +89,8 @@ export interface FanDefinition extends SurfaceDefinition {
   direction: 'left' | 'right';
   /** Continuous horizontal force in Rapier world units. */
   force: number;
+  /** Maximum horizontal speed the airflow can give the marble. */
+  maxSpeed?: number;
   /** Optional small lift so the airflow remains readable while jumping. */
   lift?: number;
 }

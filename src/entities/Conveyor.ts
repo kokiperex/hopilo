@@ -34,7 +34,11 @@ export class Conveyor {
 
   public applyTo(marble: RAPIER.RigidBody, touching: boolean): void {
     if (!touching) return;
-    marble.addForce({ x: this.definition.speed * 16, y: 0, z: 0 }, true);
+    const velocity = marble.linvel();
+    const direction = Math.sign(this.definition.speed);
+    const maxSpeed = this.definition.maxSpeed;
+    if (maxSpeed !== undefined && direction * velocity.x >= maxSpeed) return;
+    marble.addForce({ x: this.definition.speed * 4, y: 0, z: 0 }, true);
   }
 
   public syncVisual(): void {

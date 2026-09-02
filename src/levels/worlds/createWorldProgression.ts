@@ -207,9 +207,9 @@ function addFeature(
   } else if (feature === 'bounce') {
     collections.trampolines.push({ id, position: { x: section.center, y: section.surfaceY + 0.16, z: 0 }, size: { x: Math.min(1.8, section.width * 0.34), y: 0.32, z: 2.15 }, launchSpeed: 10.5 + Math.min(levelIndex, 5) * 0.2, color: theme.accent });
   } else if (feature === 'fan') {
-    collections.fans.push({ id, position: { x: section.center, y: section.surfaceY + 1.2, z: 0 }, size: { x: Math.min(2.8, section.width * 0.52), y: 2.3, z: 2.55 }, direction: direction > 0 ? 'right' : 'left', force: 8.5 + levelIndex * 0.35, lift: 2.3, color: theme.accent });
+    collections.fans.push({ id, position: { x: section.center, y: section.surfaceY + 1.2, z: 0 }, size: { x: Math.min(2.8, section.width * 0.52), y: 2.3, z: 2.55 }, direction: direction > 0 ? 'right' : 'left', force: 3.2, maxSpeed: 3.2, lift: 0.65, color: theme.accent });
   } else if (feature === 'conveyor') {
-    collections.conveyors.push({ id, position: { x: section.center, y: section.surfaceY + 0.16, z: 0 }, size: { x: Math.min(2.7, section.width * 0.52), y: 0.32, z: 2.3 }, speed: direction * (1.25 + levelIndex * 0.08), color: theme.accent });
+    collections.conveyors.push({ id, position: { x: section.center, y: section.surfaceY + 0.16, z: 0 }, size: { x: Math.min(2.7, section.width * 0.52), y: 0.32, z: 2.3 }, speed: direction * (1.25 + levelIndex * 0.08), maxSpeed: 2.8, color: theme.accent });
   } else if (feature === 'hammer' || feature === 'spinner') {
     collections.hammers.push({ id, position: { x: section.center, y: section.surfaceY + 2.25, z: 0 }, length: 1.65, thickness: 0.34, mode: feature === 'spinner' ? 'spin' : 'swing', cyclesPerSecond: feature === 'spinner' ? 0.115 : 0.18, swingAngle: Math.PI / 3.2, color: theme.accent });
   } else if (feature === 'moving-wall') {
@@ -240,8 +240,9 @@ function addGap(sectionIndex: number, center: number, gap: number, theme: WorldP
 }
 
 function gapForSection(levelIndex: number, sectionIndex: number): number {
-  if (levelIndex === 0) return sectionIndex % 3 === 1 ? 0.65 : 0.45;
-  return 0.85 + ((sectionIndex + levelIndex) % 3) * 0.18 + Math.min(levelIndex, 6) * 0.045;
+  // The marble is 1.3 m across, so every gap must exceed its diameter to require a jump.
+  if (levelIndex === 0) return sectionIndex % 3 === 1 ? 1.75 : 1.45;
+  return 1.65 + ((sectionIndex + levelIndex) % 3) * 0.22 + Math.min(levelIndex, 6) * 0.11;
 }
 
 function sectionHeight(world: WorldId, sectionIndex: number, levelIndex: number, previous: number, isRest: boolean, feature: SectionFeature): number {
