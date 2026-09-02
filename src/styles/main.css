@@ -221,10 +221,10 @@ canvas {
 }
 
 .hud-jump {
-  right: max(1rem, env(safe-area-inset-right));
+  right: max(1.5rem, calc(env(safe-area-inset-right) + 0.5rem));
   bottom: max(1rem, env(safe-area-inset-bottom));
-  width: clamp(4.05rem, 9vw, 5rem);
-  height: clamp(4.05rem, 9vw, 5rem);
+  width: clamp(4.3rem, 9.5vw, 5.25rem);
+  height: clamp(4.3rem, 9.5vw, 5.25rem);
   color: #624a14;
   background: rgba(255, 233, 125, 0.9);
 }
