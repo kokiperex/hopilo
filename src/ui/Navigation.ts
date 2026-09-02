@@ -131,18 +131,22 @@ export function createNavigation(root: HTMLElement, progress: ProgressStore, cal
     const levels = LEVEL_CATALOG.filter((level) => level.world === world);
     return `
       <div class="nav-sky nav-levels world-tone-${world}">
-        <header class="nav-header"><button class="nav-back-button" type="button" data-action="worlds" aria-label="Volver a los mundos">←</button><h1>${meta.name}</h1><span></span></header>
-        <p class="nav-subtitle">${meta.description}</p>
-        <div class="level-row">${levels.map((level, index) => {
-          const saved = progress.getLevel(level.id);
-          const unlocked = isUnlocked(level);
-          return `<button class="level-button${unlocked ? '' : ' is-locked'}" type="button" data-action="play" data-level="${level.id}" ${unlocked ? '' : 'disabled'}>
-            <span class="level-heading"><span class="level-number">${index + 1}</span><strong>${level.name}</strong></span>
-            <span class="level-lesson">${level.lesson}</span>
-            <span class="level-stars" aria-label="${saved.stars} de 3 estrellas">${[0, 1, 2].map((star) => `<i class="${star < saved.stars ? 'is-earned' : ''}">${starIcon}</i>`).join('')}</span>
-            <span class="level-status">${unlocked ? (saved.stars > 0 ? 'Jugar otra vez' : '¡Vamos!') : lockIcon}</span>
-          </button>`;
-        }).join('')}</div>
+        <div class="level-scroll" role="region" aria-label="Lista de niveles de ${meta.name}">
+          <div class="level-scroll-heading">
+            <header class="nav-header"><button class="nav-back-button" type="button" data-action="worlds" aria-label="Volver a los mundos">←</button><h1>${meta.name}</h1><span></span></header>
+            <p class="nav-subtitle">${meta.description}</p>
+          </div>
+          <div class="level-row">${levels.map((level, index) => {
+            const saved = progress.getLevel(level.id);
+            const unlocked = isUnlocked(level);
+            return `<button class="level-button${unlocked ? '' : ' is-locked'}" type="button" data-action="play" data-level="${level.id}" ${unlocked ? '' : 'disabled'}>
+              <span class="level-heading"><span class="level-number">${index + 1}</span><strong>${level.name}</strong></span>
+              <span class="level-lesson">${level.lesson}</span>
+              <span class="level-stars" aria-label="${saved.stars} de 3 estrellas">${[0, 1, 2].map((star) => `<i class="${star < saved.stars ? 'is-earned' : ''}">${starIcon}</i>`).join('')}</span>
+              <span class="level-status">${unlocked ? (saved.stars > 0 ? 'Jugar otra vez' : '¡Vamos!') : lockIcon}</span>
+            </button>`;
+          }).join('')}</div>
+        </div>
       </div>`;
   };
 

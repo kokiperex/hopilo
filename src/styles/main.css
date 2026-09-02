@@ -576,12 +576,15 @@ canvas {
 .world-lock { position: absolute; top: .55rem; left: .55rem; display: grid; width: 2rem; height: 2rem; place-items: center; border-radius: 50%; background: rgba(20, 50, 74, .7); color: #fff; }
 .world-lock svg, .level-status svg { width: 1.05rem; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2; }
 
-.nav-levels { grid-template-rows: auto auto 1fr; align-content: start; }
+.nav-levels { grid-template-rows: minmax(0, 1fr); align-content: start; height: 100vh; height: 100dvh; }
 .world-tone-wood { background: #f7d8a5; }
 .world-tone-space { background: #28245c; color: #f9fbff; }
 .world-tone-forest { background: #a7d790; }
 .nav-subtitle { position: relative; z-index: 1; margin-top: .2rem; text-align: center; color: inherit; font-weight: 800; }
-.level-row { position: relative; z-index: 1; display: grid; grid-template-columns: repeat(2, minmax(0, 13rem)); justify-content: center; gap: clamp(.7rem, 2vw, 1.2rem); width: min(38rem, 100%); margin: auto; }
+.level-scroll { position: relative; z-index: 1; min-height: 0; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; padding: 0 .2rem max(1rem, env(safe-area-inset-bottom)); scrollbar-color: rgba(23, 64, 94, .45) transparent; scrollbar-width: thin; touch-action: pan-y; }
+.level-scroll-heading { position: sticky; top: 0; z-index: 2; padding: max(.1rem, env(safe-area-inset-top)) 0 clamp(.75rem, 2vh, 1.25rem); background: #8ed8ff; box-shadow: 0 .45rem .7rem rgba(96, 179, 215, .13); }
+.world-tone-wood .level-scroll-heading { background: #f7d8a5; }.world-tone-space .level-scroll-heading { background: #28245c; }.world-tone-forest .level-scroll-heading { background: #a7d790; }
+.level-row { display: grid; grid-template-columns: repeat(2, minmax(0, 13rem)); justify-content: center; gap: clamp(.7rem, 2vw, 1.2rem); width: min(38rem, 100%); margin: 0 auto; }
 .level-button { display: grid; min-height: clamp(9rem, 35vh, 12rem); grid-template-rows: auto 1fr auto auto; align-items: center; gap: .28rem; padding: .75rem; border-radius: 1rem; background: rgba(255,255,255,.9); box-shadow: 0 .55rem 1.1rem rgba(31, 70, 76, .2); color: #17405e; cursor: pointer; transition: transform 160ms ease-out; }
 .level-button.is-locked { background: rgba(255,255,255,.5); color: #758892; cursor: default; }
 .level-heading { display: flex; align-items: center; gap: .55rem; width: 100%; text-align: left; }
