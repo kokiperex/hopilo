@@ -28,12 +28,21 @@ export function createWorldScene(scene: THREE.Scene, level: LevelDefinition): TH
   keyLight.shadow.mapSize.set(1024, 1024);
   group.add(keyLight);
 
-  if (level.world === 'beach') addBeach(group, level.sceneVariant === 'adventure');
-  else if (level.world === 'wood') addWood(group, level.sceneVariant === 'adventure');
-  else if (level.world === 'space') addSpace(group, level.sceneVariant === 'adventure');
-  else addForest(group, level.sceneVariant === 'adventure');
+  const adventure = level.sceneVariant === 'adventure';
+  const halfLength = level.approximateLength / 2;
+  const sceneryStep = 55;
+  const firstChunk = Math.floor((-halfLength - 30) / sceneryStep) * sceneryStep;
+  for (let offset = firstChunk; offset <= halfLength + 30; offset += sceneryStep) {
+    const chunk = new THREE.Group();
+    chunk.position.x = offset;
+    if (level.world === 'beach') addBeach(chunk, adventure);
+    else if (level.world === 'wood') addWood(chunk, adventure);
+    else if (level.world === 'space') addSpace(chunk, adventure);
+    else addForest(chunk, adventure);
+    group.add(chunk);
+  }
 
-  addKenneyDecorations(group, level.world, level.sceneVariant === 'adventure');
+  addKenneyDecorations(group, level.world, adventure);
 
   scene.add(group);
   return group;

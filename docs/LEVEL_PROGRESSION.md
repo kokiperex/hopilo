@@ -1,10 +1,10 @@
 # Progresión de niveles
 
-El catálogo del MVP contiene diez niveles por mundo (40 en total). La longitud es una medida aproximada del recorrido en unidades del mundo, nunca un objetivo de tiempo. Cada desafío nuevo se presenta primero aislado; los niveles finales lo encadenan con mecánicas previas y colocan plataformas anchas o checkpoints después de tramos exigentes.
+El catálogo del MVP contiene diez niveles por mundo (40 en total). La longitud base de las tablas sirve para graduar la progresión; el generador añade 16 m a todos los circuitos y 4 m adicionales por cada nivel avanzado. Así, los recorridos jugables van aproximadamente de 44 a 226 m. Esta medida nunca es un objetivo de tiempo. Cada desafío nuevo se presenta primero aislado; los niveles finales lo encadenan con mecánicas previas y colocan plataformas anchas o checkpoints después de tramos exigentes.
 
 ## Playa — arena, agua turquesa y coral
 
-| # | Nivel | Longitud | Dif. | Novedad | Combinación / progreso |
+| # | Nivel | Longitud base | Dif. | Novedad | Combinación / progreso |
 |---|---|---:|---:|---|---|
 | 1 | Dunas suaves | 28 m | 1 | Rampas | Primer recorrido sin peligro. |
 | 2 | Bahía de balsas | 40 m | 1 | Plataforma móvil | Rampa, agua y balsa. |
@@ -19,7 +19,7 @@ El catálogo del MVP contiene diez niveles por mundo (40 en total). La longitud 
 
 ## Madera — bloques pintados y puentes de juguete
 
-| # | Nivel | Longitud | Dif. | Novedad | Combinación / progreso |
+| # | Nivel | Longitud base | Dif. | Novedad | Combinación / progreso |
 |---|---|---:|---:|---|---|
 | 1 | Escalera de bloques | 28 m | 1 | Bloques bajos | Salto estable y corto. |
 | 2 | Taller de juguetes | 42 m | 1 | Bloque lateral | Rampa y bloque móvil. |
@@ -34,7 +34,7 @@ El catálogo del MVP contiene diez niveles por mundo (40 en total). La longitud 
 
 ## Espacio — órbitas violetas y plataformas flotantes
 
-| # | Nivel | Longitud | Dif. | Novedad | Combinación / progreso |
+| # | Nivel | Longitud base | Dif. | Novedad | Combinación / progreso |
 |---|---|---:|---:|---|---|
 | 1 | Órbita tranquila | 30 m | 1 | Plataforma móvil | Rodar y esperar. |
 | 2 | Salto planetario | 44 m | 1 | Plataforma ascendente | Rampa, salto y órbita. |
@@ -49,7 +49,7 @@ El catálogo del MVP contiene diez niveles por mundo (40 en total). La longitud 
 
 ## Bosque — musgo, corteza, rocas y hojas
 
-| # | Nivel | Longitud | Dif. | Novedad | Combinación / progreso |
+| # | Nivel | Longitud base | Dif. | Novedad | Combinación / progreso |
 |---|---|---:|---:|---|---|
 | 1 | Sendero de troncos | 30 m | 1 | Troncos bajos | Desniveles estables. |
 | 2 | Riachuelo escondido | 44 m | 1 | Tronco móvil | Pendiente, agua y tronco. |
@@ -66,5 +66,6 @@ El catálogo del MVP contiene diez niveles por mundo (40 en total). La longitud 
 
 - Ningún nivel utiliza tiempo, contador de progreso, botones extra o memorización obligatoria.
 - Los huecos se definen con agua o vacío contrastante; las trampas avanzadas incluyen un `cue` que exige una señal visual previa.
-- El generador inserta plataformas anchas al inicio, cada tres secciones y antes de la meta; desde el segundo nivel también añade checkpoints.
+- El generador inserta plataformas anchas al inicio, cada cuatro secciones y antes de la meta; desde el segundo nivel también añade checkpoints.
+- Cada circuito mezcla un patrón temático de alturas, escalones, gemas en arco y las mecánicas ya aprendidas; los niveles 9 y 10 añaden grupos pequeños de pinchos claramente visibles.
 - La canica, la cámara, el HUD y los controles de izquierda, derecha y salto permanecen idénticos en los cuatro mundos.
