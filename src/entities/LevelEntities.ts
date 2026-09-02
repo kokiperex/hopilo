@@ -183,7 +183,7 @@ export class LevelEntities {
       conveyor.applyTo(this.marble.body, this.isTouching(conveyor.collider));
     });
     this.fans.forEach((fan) => {
-      if (this.physics.world.intersectionPair(this.marble.collider, fan.collider)) fan.applyTo(this.marble.body);
+      fan.applyTo(this.marble.body, this.physics.world.intersectionPair(this.marble.collider, fan.collider));
     });
   }
 

@@ -12,6 +12,7 @@ export class Fan {
   private readonly blades = new THREE.Group();
   private readonly gusts: THREE.Mesh<THREE.SphereGeometry, THREE.MeshBasicMaterial>[] = [];
   private phase = 0;
+  private hasPushedMarble = false;
 
   public constructor(private readonly physics: PhysicsWorld, private readonly definition: FanDefinition) {
     const direction = definition.direction === 'right' ? 1 : -1;
@@ -38,12 +39,21 @@ export class Fan {
     ({ body: this.body, collider: this.collider } = physics.createSensorBox(definition.position, definition.size));
   }
 
-  public applyTo(marble: RAPIER.RigidBody): void {
+  /** Gives one gentle push per entry, rather than accelerating the marble forever. */
+  public applyTo(marble: RAPIER.RigidBody, isInAirflow: boolean): void {
+    if (!isInAirflow) {
+      this.hasPushedMarble = false;
+      return;
+    }
+    if (this.hasPushedMarble) return;
+
     const direction = this.definition.direction === 'right' ? 1 : -1;
     const velocity = marble.linvel();
     const maxSpeed = this.definition.maxSpeed;
-    if (maxSpeed !== undefined && direction * velocity.x >= maxSpeed) return;
-    marble.addForce({ x: direction * this.definition.force, y: this.definition.lift ?? 0, z: 0 }, true);
+    if (maxSpeed === undefined || direction * velocity.x < maxSpeed) {
+      marble.applyImpulse({ x: direction * this.definition.impulse, y: this.definition.lift ?? 0, z: 0 }, true);
+    }
+    this.hasPushedMarble = true;
   }
 
   public syncVisual(): void {

@@ -87,11 +87,11 @@ export interface ConveyorDefinition extends SurfaceDefinition {
 /** A visible air current. Its box is a sensor, never a solid wall. */
 export interface FanDefinition extends SurfaceDefinition {
   direction: 'left' | 'right';
-  /** Continuous horizontal force in Rapier world units. */
-  force: number;
+  /** One-off horizontal impulse applied when the marble enters the airflow. */
+  impulse: number;
   /** Maximum horizontal speed the airflow can give the marble. */
   maxSpeed?: number;
-  /** Optional small lift so the airflow remains readable while jumping. */
+  /** Optional small upward impulse so the airflow remains readable while jumping. */
   lift?: number;
 }
 
