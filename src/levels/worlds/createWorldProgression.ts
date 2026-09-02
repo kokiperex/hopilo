@@ -215,8 +215,11 @@ function addFeature(
     collections.movingPlatforms.push({ id, position: { x: section.gapCenter, y, z: 0 }, from: { x: section.gapCenter - 0.55, y, z: 0 }, to: { x: section.gapCenter + 0.55, y, z: 0 }, size: { x: Math.min(2, section.gap + 0.55), y: 0.32, z: 2.35 }, cyclesPerSecond: 0.12 + levelIndex * 0.006, color: theme.accent });
   } else if (feature === 'moving-vertical') {
     const x = section.center;
-    const lowY = section.surfaceY + 0.28;
-    collections.movingPlatforms.push({ id, position: { x, y: lowY, z: 0 }, from: { x, y: lowY, z: 0 }, to: { x, y: lowY + 1.15, z: 0 }, size: { x: Math.min(2.25, section.width * 0.42), y: 0.32, z: 2.35 }, cyclesPerSecond: 0.1 + levelIndex * 0.005, color: theme.accent });
+    // Keep the main route clear beneath the lift at every point in its cycle.
+    // At its lowest point it remains reachable with the standard jump, so it
+    // can still be used as an optional elevator instead of trapping the marble.
+    const lowY = section.surfaceY + 1.6;
+    collections.movingPlatforms.push({ id, position: { x, y: lowY, z: 0 }, from: { x, y: lowY, z: 0 }, to: { x, y: lowY + 1.15, z: 0 }, size: { x: Math.min(2.25, section.width * 0.42), y: 0.24, z: 2.35 }, cyclesPerSecond: 0.1 + levelIndex * 0.005, color: theme.accent });
   } else if (feature === 'bounce') {
     collections.trampolines.push({ id, position: { x: section.center, y: section.surfaceY + 0.16, z: 0 }, size: { x: Math.min(1.8, section.width * 0.34), y: 0.32, z: 2.15 }, launchSpeed: 10.5 + Math.min(levelIndex, 5) * 0.2, color: theme.accent });
   } else if (feature === 'fan') {
@@ -224,7 +227,7 @@ function addFeature(
   } else if (feature === 'conveyor') {
     collections.conveyors.push({ id, position: { x: section.center, y: section.surfaceY + 0.16, z: 0 }, size: { x: Math.min(2.7, section.width * 0.52), y: 0.32, z: 2.3 }, speed: direction * (1.25 + levelIndex * 0.08), maxSpeed: 2.8, color: theme.accent });
   } else if (feature === 'hammer' || feature === 'spinner') {
-    collections.hammers.push({ id, position: { x: section.center, y: section.surfaceY + 2.25, z: 0 }, length: 1.65, thickness: 0.34, mode: feature === 'spinner' ? 'spin' : 'swing', cyclesPerSecond: feature === 'spinner' ? 0.115 : 0.18, swingAngle: Math.PI / 3.2, color: theme.accent });
+    collections.hammers.push({ id, position: { x: section.center, y: section.surfaceY + 2.25, z: 0 }, length: 1.65, thickness: 0.34, mode: feature === 'spinner' ? 'spin' : 'swing', cyclesPerSecond: feature === 'spinner' ? 0.115 : 0.18, swingAngle: Math.PI / 2.4, color: theme.accent });
   } else if (feature === 'moving-wall') {
     collections.movingPlatforms.push({ id, position: { x: section.center, y: section.surfaceY + 1.15, z: 0 }, from: { x: section.center - 1, y: section.surfaceY + 1.15, z: 0 }, to: { x: section.center + 1, y: section.surfaceY + 1.15, z: 0 }, size: { x: 0.36, y: 2.15, z: 2.4 }, cyclesPerSecond: 0.14, color: theme.accent });
   } else if (feature === 'spikes') {

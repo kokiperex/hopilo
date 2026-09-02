@@ -50,7 +50,7 @@ export class Hammer {
     const cycle = elapsedSeconds * this.definition.cyclesPerSecond * Math.PI * 2;
     return this.definition.mode === 'spin'
       ? start + cycle
-      : start + Math.sin(cycle) * (this.definition.swingAngle ?? Math.PI / 3);
+      : start + Math.sin(cycle) * (this.definition.swingAngle ?? Math.PI / 2.4);
   }
 
   private centerAt(angle: number): { x: number; y: number; z: number } {
