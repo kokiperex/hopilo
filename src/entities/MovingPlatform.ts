@@ -4,21 +4,18 @@ import type { MovingPlatformDefinition } from '../levels/types';
 import { PHYSICS_CONFIG } from '../physics/constants';
 import type { PhysicsWorld } from '../physics/PhysicsWorld';
 import type { PhysicsEntity } from './types';
+import type { WorldId } from '../levels/types';
+import { createPlatformMesh, disposeVisual } from '../game/WorldVisuals';
 
 /** Kinematic solid generated exclusively from a moving-platform level definition. */
 export class MovingPlatform implements PhysicsEntity {
-  public readonly mesh: THREE.Mesh<THREE.BoxGeometry, THREE.MeshStandardMaterial>;
+  public readonly mesh: THREE.Group;
   public readonly body: RAPIER.RigidBody;
   public readonly collider: RAPIER.Collider;
   private elapsedSeconds = 0;
 
-  public constructor(private readonly physics: PhysicsWorld, private readonly definition: MovingPlatformDefinition) {
-    this.mesh = new THREE.Mesh(
-      new THREE.BoxGeometry(definition.size.x, definition.size.y, definition.size.z),
-      new THREE.MeshStandardMaterial({ color: definition.color ?? '#d99648', roughness: 0.78 }),
-    );
-    this.mesh.castShadow = true;
-    this.mesh.receiveShadow = true;
+  public constructor(private readonly physics: PhysicsWorld, private readonly definition: MovingPlatformDefinition, world: WorldId) {
+    this.mesh = createPlatformMesh(definition.size, definition.color ?? '#d99648', world);
     const physicsObject = physics.createKinematicBox(definition.position, definition.size);
     this.body = physicsObject.body;
     this.collider = physicsObject.collider;
@@ -41,10 +38,8 @@ export class MovingPlatform implements PhysicsEntity {
   }
 
   public dispose(): void {
-    this.mesh.removeFromParent();
     this.physics.removeBody(this.body);
-    this.mesh.geometry.dispose();
-    this.mesh.material.dispose();
+    disposeVisual(this.mesh);
   }
 
   private setPosition(position: MovingPlatformDefinition['position']): void {

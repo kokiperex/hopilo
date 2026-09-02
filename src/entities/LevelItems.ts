@@ -35,12 +35,17 @@ export interface GoalItem extends SensorItem {
 
 export function createGem(physics: PhysicsWorld, definition: GemDefinition): GemItem {
   const mesh = new THREE.Group();
+  const halo = new THREE.Mesh(
+    new THREE.OctahedronGeometry(0.54, 0),
+    new THREE.MeshBasicMaterial({ color: '#9dffe0', transparent: true, opacity: 0.16 }),
+  );
   const crystal = new THREE.Mesh(
-    new THREE.OctahedronGeometry(0.38, 0),
-    new THREE.MeshStandardMaterial({ color: '#38e5ae', emissive: '#127e5b', emissiveIntensity: 0.65, roughness: 0.24 }),
+    new THREE.OctahedronGeometry(0.4, 0),
+    new THREE.MeshStandardMaterial({ color: '#42edb2', emissive: '#0c8a60', emissiveIntensity: 0.72, roughness: 0.22, flatShading: true }),
   );
   crystal.rotation.z = Math.PI / 4;
-  mesh.add(crystal);
+  halo.scale.set(1, 1.15, 0.75);
+  mesh.add(halo, crystal);
   mesh.position.set(definition.position.x, definition.position.y, definition.position.z);
   const sensor = physics.createSensorBall(definition.position, definition.radius ?? 0.78);
   return { definition, mesh, collected: false, ...sensor };
@@ -56,7 +61,13 @@ export function createCheckpoint(physics: PhysicsWorld, definition: CheckpointDe
   const flagMaterial = new THREE.MeshStandardMaterial({ color: '#87a9b7', emissive: '#42626f', emissiveIntensity: 0.2, side: THREE.DoubleSide });
   const flag = new THREE.Mesh(new THREE.PlaneGeometry(0.68, 0.42), flagMaterial);
   flag.position.set(0.39, 0.58, 0);
-  mesh.add(pole, flag);
+  const marker = new THREE.Mesh(
+    new THREE.TorusGeometry(0.19, 0.045, 6, 12),
+    new THREE.MeshBasicMaterial({ color: '#ffdc6e', transparent: true, opacity: 0.72 }),
+  );
+  marker.position.y = 0.18;
+  marker.rotation.x = Math.PI / 2;
+  mesh.add(pole, flag, marker);
   mesh.position.set(definition.position.x, definition.position.y, definition.position.z);
   const sensor = physics.createSensorBall(definition.position, definition.radius ?? 0.95);
   return { definition, mesh, active: false, glow: 0, flagMaterial, ...sensor };
@@ -66,7 +77,14 @@ export function createHazard(physics: PhysicsWorld, definition: HazardDefinition
   const mesh = new THREE.Group();
   if (definition.kind === 'spikes') {
     const geometry = new THREE.ConeGeometry(0.24, Math.max(0.55, definition.size.y), 5);
-    const material = new THREE.MeshStandardMaterial({ color: '#fff7df', emissive: '#bc8b46', emissiveIntensity: 0.28, roughness: 0.42 });
+    const material = new THREE.MeshStandardMaterial({ color: '#fff9de', emissive: '#c18a44', emissiveIntensity: 0.32, roughness: 0.42, flatShading: true });
+    const base = new THREE.Mesh(
+      new THREE.BoxGeometry(definition.size.x, 0.13, definition.size.z * 0.92),
+      new THREE.MeshStandardMaterial({ color: '#d9574f', roughness: 0.66, flatShading: true }),
+    );
+    base.position.y = -definition.size.y / 2 + 0.065;
+    base.castShadow = base.receiveShadow = true;
+    mesh.add(base);
     const count = Math.max(1, Math.floor(definition.size.x / 0.52));
     for (let index = 0; index < count; index += 1) {
       const spike = new THREE.Mesh(geometry, material);
@@ -81,6 +99,21 @@ export function createHazard(physics: PhysicsWorld, definition: HazardDefinition
     });
     const surface = new THREE.Mesh(new THREE.BoxGeometry(definition.size.x, definition.size.y, definition.size.z), material);
     mesh.add(surface);
+    if (isWater) {
+      const foamMaterial = new THREE.MeshBasicMaterial({ color: '#d7fbff', transparent: true, opacity: 0.66 });
+      [-0.28, 0, 0.28].forEach((offset, index) => {
+        const foam = new THREE.Mesh(new THREE.BoxGeometry(definition.size.x * (0.22 + (index % 2) * 0.08), 0.035, 0.05), foamMaterial);
+        foam.position.set(offset * definition.size.x, definition.size.y / 2 + 0.025, -definition.size.z / 2 - 0.015);
+        mesh.add(foam);
+      });
+    } else {
+      const rimMaterial = new THREE.MeshBasicMaterial({ color: '#756ce8', transparent: true, opacity: 0.55 });
+      [-1, 1].forEach((side) => {
+        const rim = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.09, definition.size.z), rimMaterial);
+        rim.position.set(side * (definition.size.x / 2 - 0.04), definition.size.y / 2 + 0.035, 0);
+        mesh.add(rim);
+      });
+    }
   }
   mesh.position.set(definition.position.x, definition.position.y, definition.position.z);
   const sensor = physics.createSensorBox(definition.position, definition.size);
@@ -95,6 +128,12 @@ export function createGoal(physics: PhysicsWorld, definition: GoalDefinition): G
   );
   pole.position.y = 0.35;
   mesh.add(pole);
+  const finial = new THREE.Mesh(
+    new THREE.SphereGeometry(0.13, 10, 7),
+    new THREE.MeshStandardMaterial({ color: '#ffd96b', emissive: '#b87816', emissiveIntensity: 0.32, roughness: 0.36 }),
+  );
+  finial.position.y = 1.31;
+  mesh.add(finial);
   const squareGeometry = new THREE.PlaneGeometry(0.32, 0.28);
   const colors = ['#ffffff', '#263858', '#263858', '#ffffff'];
   colors.forEach((color, index) => {

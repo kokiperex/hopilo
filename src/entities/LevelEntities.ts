@@ -45,8 +45,8 @@ export class LevelEntities {
   private elapsedSeconds = 0;
 
   public constructor(private readonly scene: THREE.Scene, private readonly physics: PhysicsWorld, private readonly level: LevelDefinition, private readonly events: LevelEvents) {
-    this.platforms = [...level.platforms, ...level.ramps].map((definition) => new Platform(physics, definition));
-    this.movingPlatforms = level.movingPlatforms.map((definition) => new MovingPlatform(physics, definition));
+    this.platforms = [...level.platforms, ...level.ramps].map((definition) => new Platform(physics, definition, level.world));
+    this.movingPlatforms = level.movingPlatforms.map((definition) => new MovingPlatform(physics, definition, level.world));
     this.trampolines = level.trampolines.map((definition) => new Trampoline(physics, definition));
     this.conveyors = level.conveyors.map((definition) => new Conveyor(physics, definition));
     this.fans = level.fans.map((definition) => new Fan(physics, definition));

@@ -47,6 +47,9 @@ export class Game {
     this.renderer.setClearColor(GAME_CONFIG.world.clearColor);
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFShadowMap;
+    this.renderer.outputColorSpace = THREE.SRGBColorSpace;
+    this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    this.renderer.toneMappingExposure = 1.08;
     this.renderer.domElement.tabIndex = 0;
     this.renderer.domElement.setAttribute('aria-label', 'Área de juego de Hopilo');
     this.root.append(this.renderer.domElement);

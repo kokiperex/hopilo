@@ -1,31 +1,25 @@
 import * as THREE from 'three';
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import type { LevelDefinition } from '../levels/types';
 import { WORLD_META } from '../levels/worldMeta';
 
 type Material = THREE.MeshStandardMaterial | THREE.MeshBasicMaterial;
 
-const kenneyLoader = new GLTFLoader();
-const assetPath = (path: string): string => `${import.meta.env.BASE_URL}assets/${path}`;
-
-interface KenneyDecoration {
-  readonly path: string;
-  readonly position: readonly [number, number, number];
-  readonly scale: number;
-  readonly rotationY?: number;
-}
-
-/** Builds light, primitive-only scenery behind the shared 2.5D gameplay plane. */
+/** Builds a shallow, primitive-only backdrop behind the shared 2.5D gameplay plane. */
 export function createWorldScene(scene: THREE.Scene, level: LevelDefinition): THREE.Group {
   const group = new THREE.Group();
   const theme = WORLD_META[level.world];
   group.name = `world-decoration-${level.world}-${level.sceneVariant}`;
 
-  group.add(new THREE.HemisphereLight('#ffffff', level.world === 'space' ? '#11102f' : theme.color, 2.5));
-  const keyLight = new THREE.DirectionalLight(level.world === 'space' ? '#d9dcff' : '#fff2d2', 1.5);
+  group.add(new THREE.HemisphereLight('#ffffff', level.world === 'space' ? '#11102f' : theme.color, 1.85));
+  const keyLight = new THREE.DirectionalLight(level.world === 'space' ? '#d9dcff' : '#fff2d2', 1.85);
   keyLight.position.set(-8, 12, 10);
   keyLight.castShadow = true;
-  keyLight.shadow.mapSize.set(1024, 1024);
+  keyLight.shadow.mapSize.set(512, 512);
+  keyLight.shadow.camera.left = -14;
+  keyLight.shadow.camera.right = 14;
+  keyLight.shadow.camera.top = 10;
+  keyLight.shadow.camera.bottom = -7;
+  keyLight.shadow.normalBias = 0.035;
   group.add(keyLight);
 
   const adventure = level.sceneVariant === 'adventure';
@@ -42,65 +36,8 @@ export function createWorldScene(scene: THREE.Scene, level: LevelDefinition): TH
     group.add(chunk);
   }
 
-  addKenneyDecorations(group, level.world, adventure);
-
   scene.add(group);
   return group;
-}
-
-/**
- * Kenney models are decorative only: collision and level layout remain data-driven
- * primitives, so a failed or delayed asset request can never affect gameplay.
- */
-function addKenneyDecorations(group: THREE.Group, world: LevelDefinition['world'], adventure: boolean): void {
-  const decorations: Record<LevelDefinition['world'], KenneyDecoration[]> = {
-    beach: [
-      { path: assetPath('kenney/models/nature/palm.glb'), position: [adventure ? 20 : 24, 0.1, -3.7], scale: 0.82, rotationY: -0.18 },
-      { path: assetPath('kenney/models/marble/banner.glb'), position: [adventure ? 10 : 16, 0.2, -3.35], scale: 0.5 },
-    ],
-    wood: [
-      { path: assetPath('kenney/models/platformer/moving-block.glb'), position: [adventure ? 18 : 22, 0.35, -3.65], scale: 0.9, rotationY: 0.2 },
-      { path: assetPath('kenney/models/platformer/conveyor.glb'), position: [adventure ? 5 : 12, -0.2, -3.85], scale: 0.72 },
-    ],
-    space: [
-      { path: assetPath('kenney/models/space/gate.glb'), position: [adventure ? 18 : 25, 0.25, -4.8], scale: 0.78, rotationY: Math.PI / 2 },
-      { path: assetPath('kenney/models/space/cables.glb'), position: [adventure ? -5 : 3, 3.4, -5.25], scale: 0.7 },
-    ],
-    forest: [
-      { path: assetPath('kenney/models/nature/tree.glb'), position: [adventure ? 20 : 27, 0.15, -3.85], scale: 0.95, rotationY: 0.35 },
-      { path: assetPath('kenney/models/nature/rock.glb'), position: [adventure ? 11 : 17, -0.25, -3.2], scale: 0.95, rotationY: -0.4 },
-      { path: assetPath('kenney/models/marble/fan.glb'), position: [adventure ? -2 : 7, 0.1, -4.5], scale: 0.44 },
-    ],
-  };
-
-  decorations[world].forEach(({ path, position, scale, rotationY = 0 }) => {
-    kenneyLoader.load(path, (asset) => {
-      if (!group.parent) {
-        disposeImportedAsset(asset.scene);
-        return;
-      }
-      const model = asset.scene;
-      model.position.set(...position);
-      model.scale.setScalar(scale);
-      model.rotation.y = rotationY;
-      model.traverse((object) => {
-        if (object instanceof THREE.Mesh) {
-          object.castShadow = true;
-          object.receiveShadow = true;
-        }
-      });
-      group.add(model);
-    }, undefined, () => undefined);
-  });
-}
-
-function disposeImportedAsset(asset: THREE.Object3D): void {
-  asset.traverse((object) => {
-    if (!(object instanceof THREE.Mesh)) return;
-    object.geometry.dispose();
-    if (Array.isArray(object.material)) object.material.forEach((material) => material.dispose());
-    else object.material.dispose();
-  });
 }
 
 function addBeach(group: THREE.Group, adventure: boolean): void {
@@ -109,6 +46,11 @@ function addBeach(group: THREE.Group, adventure: boolean): void {
   const trunk = standard('#9c673d', 0.9);
   const leaf = standard(adventure ? '#218d71' : '#37a66f', 0.82);
   addMesh(group, new THREE.BoxGeometry(58, 1.2, 0.38), water, 7, -1.32, -2.5);
+  const foam = basic('#d7faff', true, 0.5);
+  [-13, -1, 11, 24, 36].forEach((x, index) => {
+    const wave = addMesh(group, new THREE.BoxGeometry(4.4, 0.055, 0.04), foam, x, -0.77 + (index % 2) * 0.16, -2.27);
+    wave.rotation.z = index % 2 ? -0.03 : 0.025;
+  });
 
   const duneGeometry = new THREE.SphereGeometry(1, 12, 8);
   [-16, -5, 8, 22, 33].forEach((x, index) => {
@@ -137,6 +79,11 @@ function addBeach(group: THREE.Group, adventure: boolean): void {
       const marker = addMesh(group, new THREE.ConeGeometry(0.42, 0.9, 6), coral, x, -0.2, -3.35);
       marker.rotation.z = 0.18;
     });
+    const shell = standard('#fff0cc', 0.64);
+    [5, 27].forEach((x, index) => {
+      const pebble = addMesh(group, new THREE.DodecahedronGeometry(0.24, 0), shell, x, -0.32 + index * 0.16, -3.15);
+      pebble.scale.set(1.35, 0.65, 0.55);
+    });
   }
 }
 
@@ -147,6 +94,8 @@ function addWood(group: THREE.Group, adventure: boolean): void {
   const red = standard('#d86d58', 0.75);
   addMesh(group, new THREE.BoxGeometry(60, 1.7, 0.5), bench, 7, -1.65, -3.7);
   addMesh(group, new THREE.BoxGeometry(60, 0.22, 0.42), maple, 7, 4.85, -5);
+  const seam = standard('#8b4f35', 0.92);
+  [-17, -9, -1, 7, 15, 23, 31].forEach((x) => addMesh(group, new THREE.BoxGeometry(0.12, 1.82, 0.03), seam, x, -1.64, -3.43));
 
   const blockGeometry = new THREE.BoxGeometry(1.25, 1.25, 1.25);
   [-15, -6, 4, 14, 25, 33].forEach((x, index) => {
@@ -166,13 +115,18 @@ function addWood(group: THREE.Group, adventure: boolean): void {
   if (adventure) {
     const arch = new THREE.TorusGeometry(1.25, 0.28, 7, 14, Math.PI);
     [-3, 22].forEach((x) => addMesh(group, arch, maple, x, 0.2, -4.35));
+    const peg = standard('#fff1c2', 0.42);
+    [2, 14, 29].forEach((x) => {
+      const circle = addMesh(group, new THREE.CylinderGeometry(0.16, 0.16, 0.06, 8), peg, x, 0.85, -3.38);
+      circle.rotation.x = Math.PI / 2;
+    });
   }
 }
 
 function addSpace(group: THREE.Group, adventure: boolean): void {
   const starMaterial = new THREE.PointsMaterial({ color: '#ffffff', size: 0.1, transparent: true, opacity: 0.88 });
   const positions: number[] = [];
-  for (let index = 0; index < 96; index += 1) {
+  for (let index = 0; index < 64; index += 1) {
     positions.push(((index * 17) % 57) - 20, ((index * 11) % 11) - 1, -6 - (index % 3));
   }
   const starGeometry = new THREE.BufferGeometry();
@@ -198,6 +152,12 @@ function addSpace(group: THREE.Group, adventure: boolean): void {
   const glow = basic(adventure ? '#7168d8' : '#514aa0', true, 0.16);
   const nebula = addMesh(group, new THREE.SphereGeometry(1, 12, 8), glow, 9, 1.5, -8);
   nebula.scale.set(11, 4.5, 1);
+  const orbit = standard('#c9d9ff', 0.46, true, 0.36);
+  [0, 19].forEach((x, index) => {
+    const ring = addMesh(group, new THREE.TorusGeometry(1.2 + index * 0.28, 0.035, 5, 16), orbit, x, 1.3 + index * 0.8, -5.7);
+    ring.rotation.x = 1.12;
+    ring.rotation.z = -0.22;
+  });
 }
 
 function addForest(group: THREE.Group, adventure: boolean): void {
@@ -227,6 +187,12 @@ function addForest(group: THREE.Group, adventure: boolean): void {
     const stone = addMesh(group, rockGeometry, rock, x, -0.25, -3.4);
     stone.scale.set(1.3, 0.72 + (index % 2) * 0.22, 0.9);
   });
+
+  const flower = standard('#f0ca6b', 0.72);
+  [-6, 6, 20].forEach((x, index) => {
+    const bloom = addMesh(group, new THREE.ConeGeometry(0.18, 0.42, 5), flower, x, -0.18 + (index % 2) * 0.16, -3.25);
+    bloom.rotation.z = 0.18;
+  });
 }
 
 function addCloud(group: THREE.Group, x: number, y: number, material: THREE.MeshBasicMaterial): void {
@@ -250,13 +216,15 @@ function addMesh(
 ): THREE.Mesh {
   const mesh = new THREE.Mesh(geometry, material);
   mesh.position.set(x, y, z);
-  mesh.receiveShadow = true;
+  // Background never contributes to the shadow pass: it stays soft and cheap.
+  mesh.castShadow = false;
+  mesh.receiveShadow = false;
   parent.add(mesh);
   return mesh;
 }
 
 function standard(color: string, roughness: number, transparent = false, opacity = 1): THREE.MeshStandardMaterial {
-  return new THREE.MeshStandardMaterial({ color, roughness, transparent, opacity });
+  return new THREE.MeshStandardMaterial({ color, roughness, transparent, opacity, flatShading: true });
 }
 
 function basic(color: string, transparent = false, opacity = 1): THREE.MeshBasicMaterial {

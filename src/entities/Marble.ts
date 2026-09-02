@@ -5,6 +5,7 @@ import type { MarbleDefinition, Vec3Data } from '../levels/types';
 import { PHYSICS_CONFIG } from '../physics/constants';
 import type { PhysicsWorld } from '../physics/PhysicsWorld';
 import type { PhysicsEntity } from './types';
+import { disposeVisual } from '../game/WorldVisuals';
 
 const DEFAULT_RADIUS = 0.65;
 
@@ -15,7 +16,10 @@ interface GroundSurface {
 export class Marble implements PhysicsEntity {
   public readonly body: RAPIER.RigidBody;
   public readonly collider: RAPIER.Collider;
-  public readonly mesh: THREE.Mesh<THREE.SphereGeometry, THREE.MeshPhysicalMaterial>;
+  /** Position root: the sphere can roll while the glow trail stays screen-readable. */
+  public readonly mesh = new THREE.Group();
+  private readonly sphere: THREE.Mesh<THREE.SphereGeometry, THREE.MeshPhysicalMaterial>;
+  private readonly trail: THREE.Mesh<THREE.SphereGeometry, THREE.MeshBasicMaterial>[] = [];
   private readonly previousPosition = new THREE.Vector3();
   private readonly currentPosition = new THREE.Vector3();
   private jumpWasDown = false;
@@ -32,8 +36,8 @@ export class Marble implements PhysicsEntity {
       metalness: 0.1,
       transmission: 0.08,
     };
-    this.mesh = new THREE.Mesh(
-      new THREE.SphereGeometry(radius, 24, 16),
+    this.sphere = new THREE.Mesh(
+      new THREE.SphereGeometry(radius, 20, 14),
       new THREE.MeshPhysicalMaterial({
         ...materialConfig,
         clearcoat: 0.75,
@@ -42,13 +46,23 @@ export class Marble implements PhysicsEntity {
         opacity: 0.95,
       }),
     );
-    this.mesh.castShadow = true;
+    this.sphere.castShadow = true;
     const glow = new THREE.Mesh(
-      new THREE.SphereGeometry(radius * 0.43, 12, 8),
-      new THREE.MeshBasicMaterial({ color: '#bfefff', transparent: true, opacity: 0.48 }),
+      new THREE.SphereGeometry(radius * 0.4, 10, 7),
+      new THREE.MeshBasicMaterial({ color: '#d5f6ff', transparent: true, opacity: 0.4 }),
     );
     glow.position.set(-radius * 0.38, radius * 0.28, radius * 0.38);
-    this.mesh.add(glow);
+    this.sphere.add(glow);
+    this.mesh.add(this.sphere);
+    for (let index = 0; index < 4; index += 1) {
+      const trailPoint = new THREE.Mesh(
+        new THREE.SphereGeometry(radius * (0.16 - index * 0.022), 8, 6),
+        new THREE.MeshBasicMaterial({ color: '#7ee7ff', transparent: true, opacity: 0 }),
+      );
+      trailPoint.renderOrder = 1;
+      this.trail.push(trailPoint);
+      this.mesh.add(trailPoint);
+    }
 
     this.body = physics.world.createRigidBody(
       RAPIER.RigidBodyDesc.dynamic()
@@ -126,14 +140,15 @@ export class Marble implements PhysicsEntity {
     this.currentPosition.set(translation.x, translation.y, translation.z);
     this.mesh.position.lerpVectors(this.previousPosition, this.currentPosition, interpolation);
     const rotation = this.body.rotation();
-    this.mesh.quaternion.set(rotation.x, rotation.y, rotation.z, rotation.w);
+    this.sphere.quaternion.set(rotation.x, rotation.y, rotation.z, rotation.w);
     this.jumpPulse = Math.max(0, this.jumpPulse - 0.12);
     this.hitPulse = Math.max(0, this.hitPulse - 0.09);
     const stretch = 1 + this.jumpPulse * 0.13;
     const squish = 1 - this.jumpPulse * 0.1 - this.hitPulse * 0.08;
-    this.mesh.scale.set(stretch, Math.max(0.82, squish), stretch);
-    this.mesh.material.emissive.set(this.hitPulse > 0 ? '#db5c5c' : '#000000');
-    this.mesh.material.emissiveIntensity = this.hitPulse * 0.38;
+    this.sphere.scale.set(stretch, Math.max(0.82, squish), stretch);
+    this.sphere.material.emissive.set(this.hitPulse > 0 ? '#db5c5c' : '#000000');
+    this.sphere.material.emissiveIntensity = this.hitPulse * 0.38;
+    this.updateTrail();
   }
 
   public reactToHazard(): void {
@@ -141,15 +156,8 @@ export class Marble implements PhysicsEntity {
   }
 
   public dispose(): void {
-    this.mesh.removeFromParent();
     this.physics.removeBody(this.body);
-    this.mesh.children.forEach((child) => {
-      const childMesh = child as THREE.Mesh;
-      childMesh.geometry?.dispose();
-      (childMesh.material as THREE.Material | undefined)?.dispose();
-    });
-    this.mesh.geometry.dispose();
-    this.mesh.material.dispose();
+    disposeVisual(this.mesh);
   }
 
   private isOnPlatform(platforms: readonly GroundSurface[]): boolean {
@@ -167,5 +175,18 @@ export class Marble implements PhysicsEntity {
     this.previousPosition.set(position.x, position.y, position.z);
     this.currentPosition.copy(this.previousPosition);
     this.mesh.position.copy(this.previousPosition);
+  }
+
+  private updateTrail(): void {
+    const velocity = this.body.linvel();
+    const speed = Math.abs(velocity.x);
+    const direction = speed > 0.16 ? -Math.sign(velocity.x) : -1;
+    const visible = THREE.MathUtils.smoothstep(speed, 0.5, 3.1);
+    this.trail.forEach((point, index) => {
+      const distance = 0.52 + index * 0.26 + visible * 0.18;
+      point.position.set(direction * distance, -0.1 + index * 0.035, -0.16 - index * 0.018);
+      point.scale.setScalar(0.75 + visible * 0.55);
+      point.material.opacity = visible * (0.2 - index * 0.038);
+    });
   }
 }
