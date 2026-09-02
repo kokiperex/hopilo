@@ -6,6 +6,8 @@ import { PHYSICS_CONFIG } from '../physics/constants';
 import type { PhysicsWorld } from '../physics/PhysicsWorld';
 import type { PhysicsEntity } from './types';
 import { disposeVisual } from '../game/WorldVisuals';
+import { createMarbleSkin } from '../skins/createMarbleSkin';
+import { DEFAULT_MARBLE_SKIN_ID, type MarbleSkinId } from '../skins/skinCatalog';
 
 const DEFAULT_RADIUS = 0.65;
 
@@ -18,6 +20,7 @@ export class Marble implements PhysicsEntity {
   public readonly collider: RAPIER.Collider;
   /** Position root: the sphere can roll while the glow trail stays screen-readable. */
   public readonly mesh = new THREE.Group();
+  private readonly rollingVisual: THREE.Group;
   private readonly sphere: THREE.Mesh<THREE.SphereGeometry, THREE.MeshPhysicalMaterial>;
   private readonly trail: THREE.Mesh<THREE.SphereGeometry, THREE.MeshBasicMaterial>[] = [];
   private readonly previousPosition = new THREE.Vector3();
@@ -28,36 +31,16 @@ export class Marble implements PhysicsEntity {
   private jumpPulse = 0;
   private hitPulse = 0;
 
-  public constructor(private readonly physics: PhysicsWorld, spawn: Vec3Data, definition: MarbleDefinition = {}) {
+  public constructor(private readonly physics: PhysicsWorld, spawn: Vec3Data, definition: MarbleDefinition = {}, skinId: MarbleSkinId = DEFAULT_MARBLE_SKIN_ID) {
     const radius = definition.radius ?? DEFAULT_RADIUS;
-    const materialConfig = definition.material ?? {
-      color: '#59b9ff',
-      roughness: 0.12,
-      metalness: 0.1,
-      transmission: 0.08,
-    };
-    this.sphere = new THREE.Mesh(
-      new THREE.SphereGeometry(radius, 20, 14),
-      new THREE.MeshPhysicalMaterial({
-        ...materialConfig,
-        clearcoat: 0.75,
-        clearcoatRoughness: 0.1,
-        transparent: true,
-        opacity: 0.95,
-      }),
-    );
-    this.sphere.castShadow = true;
-    const glow = new THREE.Mesh(
-      new THREE.SphereGeometry(radius * 0.4, 10, 7),
-      new THREE.MeshBasicMaterial({ color: '#d5f6ff', transparent: true, opacity: 0.4 }),
-    );
-    glow.position.set(-radius * 0.38, radius * 0.28, radius * 0.38);
-    this.sphere.add(glow);
-    this.mesh.add(this.sphere);
+    const skin = createMarbleSkin(skinId, radius);
+    this.sphere = skin.sphere;
+    this.rollingVisual = skin.rollingVisual;
+    this.mesh.add(this.rollingVisual);
     for (let index = 0; index < 4; index += 1) {
       const trailPoint = new THREE.Mesh(
         new THREE.SphereGeometry(radius * (0.16 - index * 0.022), 8, 6),
-        new THREE.MeshBasicMaterial({ color: '#7ee7ff', transparent: true, opacity: 0 }),
+        new THREE.MeshBasicMaterial({ color: skin.trailColor, transparent: true, opacity: 0 }),
       );
       trailPoint.renderOrder = 1;
       this.trail.push(trailPoint);
@@ -140,12 +123,12 @@ export class Marble implements PhysicsEntity {
     this.currentPosition.set(translation.x, translation.y, translation.z);
     this.mesh.position.lerpVectors(this.previousPosition, this.currentPosition, interpolation);
     const rotation = this.body.rotation();
-    this.sphere.quaternion.set(rotation.x, rotation.y, rotation.z, rotation.w);
+    this.rollingVisual.quaternion.set(rotation.x, rotation.y, rotation.z, rotation.w);
     this.jumpPulse = Math.max(0, this.jumpPulse - 0.12);
     this.hitPulse = Math.max(0, this.hitPulse - 0.09);
     const stretch = 1 + this.jumpPulse * 0.13;
     const squish = 1 - this.jumpPulse * 0.1 - this.hitPulse * 0.08;
-    this.sphere.scale.set(stretch, Math.max(0.82, squish), stretch);
+    this.rollingVisual.scale.set(stretch, Math.max(0.82, squish), stretch);
     this.sphere.material.emissive.set(this.hitPulse > 0 ? '#db5c5c' : '#000000');
     this.sphere.material.emissiveIntensity = this.hitPulse * 0.38;
     this.updateTrail();

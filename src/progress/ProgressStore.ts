@@ -1,14 +1,17 @@
+import { DEFAULT_MARBLE_SKIN_ID, isMarbleSkinId, type MarbleSkinId } from '../skins/skinCatalog';
+
 export interface LevelProgress {
   stars: number;
   bestGems: number;
 }
 
 export interface ProgressData {
-  version: 1;
+  version: 2;
   levels: Record<string, LevelProgress>;
   unlockedLevels: string[];
   gems: number;
   audioEnabled: boolean;
+  selectedSkinId: MarbleSkinId;
 }
 
 export interface LevelResult {
@@ -19,7 +22,7 @@ export interface LevelResult {
 const STORAGE_KEY = 'hopilo.progress.v1';
 
 function createDefaultProgress(): ProgressData {
-  return { version: 1, levels: {}, unlockedLevels: [], gems: 0, audioEnabled: true };
+  return { version: 2, levels: {}, unlockedLevels: [], gems: 0, audioEnabled: true, selectedSkinId: DEFAULT_MARBLE_SKIN_ID };
 }
 
 /** Small defensive wrapper around localStorage so the game remains playable when it is unavailable. */
@@ -65,6 +68,11 @@ export class ProgressStore {
     this.persist();
   }
 
+  public setSelectedSkin(selectedSkinId: MarbleSkinId): void {
+    this.data.selectedSkinId = selectedSkinId;
+    this.persist();
+  }
+
   public reset(): void {
     this.data = createDefaultProgress();
     this.persist();
@@ -74,14 +82,15 @@ export class ProgressStore {
     try {
       const stored = this.storage?.getItem(STORAGE_KEY);
       if (!stored) return createDefaultProgress();
-      const candidate = JSON.parse(stored) as Partial<ProgressData>;
-      if (candidate.version !== 1 || typeof candidate.gems !== 'number' || typeof candidate.audioEnabled !== 'boolean' || !candidate.levels || typeof candidate.levels !== 'object') {
+      const candidate = JSON.parse(stored) as Partial<Omit<ProgressData, 'version'>> & { version?: number };
+      if ((candidate.version !== 1 && candidate.version !== 2) || typeof candidate.gems !== 'number' || typeof candidate.audioEnabled !== 'boolean' || !candidate.levels || typeof candidate.levels !== 'object') {
         return createDefaultProgress();
       }
       return {
-        version: 1,
+        version: 2,
         gems: Math.max(0, candidate.gems),
         audioEnabled: candidate.audioEnabled,
+        selectedSkinId: isMarbleSkinId(candidate.selectedSkinId) ? candidate.selectedSkinId : DEFAULT_MARBLE_SKIN_ID,
         unlockedLevels: Array.isArray(candidate.unlockedLevels) ? candidate.unlockedLevels.filter((levelId): levelId is string => typeof levelId === 'string') : [],
         levels: Object.fromEntries(Object.entries(candidate.levels).flatMap(([id, value]) => {
           const item = value as Partial<LevelProgress>;

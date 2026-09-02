@@ -8,7 +8,7 @@
 
 ## 1. Resumen del producto
 
-Hopilo es un juego web de obstáculos en el que el jugador controla una canica azul de vidrio a través de circuitos 2.5D coloridos y sencillos. La canica rueda, salta, rebota y esquiva obstáculos hasta llegar a la bandera final.
+Hopilo es un juego web de obstáculos en el que el jugador controla una canica personalizable a través de circuitos 2.5D coloridos y sencillos. La canica rueda, salta, rebota y esquiva obstáculos hasta llegar a la bandera final.
 
 El juego debe ser fácil de entender para un niño pequeño, rápido de iniciar y ligero para funcionar en teléfonos móviles desde el navegador. La profundidad visual será 3D, pero el movimiento se mantendrá principalmente en un plano horizontal para reducir la complejidad de los controles.
 
@@ -29,13 +29,14 @@ Principios del producto:
 
 ### Bucle de juego
 
-1. El jugador selecciona un nivel.
-2. La canica comienza en el punto de inicio.
-3. El jugador rueda y salta para superar el circuito.
-4. Recoge gemas opcionales.
-5. Activa checkpoints cuando existan.
-6. Llega a la bandera final.
-7. Recibe una evaluación de hasta tres estrellas.
+1. El jugador elige un skin de canica.
+2. Selecciona un mundo y un nivel.
+3. La canica comienza en el punto de inicio.
+4. El jugador rueda y salta para superar el circuito.
+5. Recoge gemas opcionales.
+6. Activa checkpoints cuando existan.
+7. Llega a la bandera final.
+8. Recibe una evaluación de hasta tres estrellas.
 
 ### Movimiento
 
@@ -157,11 +158,13 @@ Características visuales que deben conservarse:
 
 La referencia sugiere un acabado más pulido y suave que un low-poly estricto; se puede utilizar iluminación ambiental, materiales simples, desenfoque selectivo y formas biseladas sin convertir el MVP en una experiencia visual pesada ni realista. La interfaz, la escala de la cámara y la posición de los elementos del HUD deben permanecer constantes aunque cambien el color, los materiales y la decoración de cada mundo.
 
-### Canica del MVP
+### Skins de la canica
 
-- Una única canica azul de vidrio.
-- Tamaño, peso y comportamiento constantes en todos los niveles.
-- Brillo sencillo y una pequeña estela luminosa al desplazarse.
+- Siete skins disponibles para todos desde el inicio: azul de vidrio, llanta con púas suaves, multicolor, rojo y marrón, Turquía, Perú y X multicolor.
+- El skin se elige después de pulsar “Jugar” y antes de seleccionar mundo y nivel.
+- La selección se guarda localmente y se reutiliza en partidas posteriores.
+- Todos los skins mantienen el mismo tamaño, collider, peso y comportamiento.
+- Cada skin puede ajustar su material y el color de su pequeña estela luminosa.
 - La estela debe ser sutil y no ocultar obstáculos ni controles.
 
 ### Consistencia entre mundos
@@ -171,7 +174,7 @@ Deben mantenerse constantes:
 - Posición y tamaño de los controles.
 - Posición del botón de pausa.
 - Posición del contador de gemas.
-- Estilo de la canica.
+- Escala física y legibilidad de la canica seleccionada.
 - Cámara y escala de gameplay.
 - Tratamiento de metas, checkpoints y peligros.
 
@@ -198,6 +201,7 @@ No incluir en el gameplay:
 Pantallas adicionales previstas:
 
 - Pantalla de inicio.
+- Selección de skin en cuadrícula.
 - Selección de mundo.
 - Selección de nivel.
 - Resultado del nivel.
@@ -258,6 +262,7 @@ El juego debe guardar localmente:
 
 - Niveles desbloqueados.
 - Mejor resultado de estrellas por nivel.
+- Skin de canica seleccionado.
 - Gemas obtenidas, si se decide contabilizarlas globalmente.
 - Mundo alcanzado.
 - Ajustes de audio.

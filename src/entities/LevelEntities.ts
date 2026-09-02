@@ -13,6 +13,7 @@ import { Fan } from './Fan';
 import { Hammer } from './Hammer';
 import { WaterSplash } from './WaterSplash';
 import type { PhysicsEntity } from './types';
+import type { MarbleSkinId } from '../skins/skinCatalog';
 
 export interface LevelEvents {
   onJump(): void;
@@ -44,7 +45,7 @@ export class LevelEntities {
   private complete = false;
   private elapsedSeconds = 0;
 
-  public constructor(private readonly scene: THREE.Scene, private readonly physics: PhysicsWorld, private readonly level: LevelDefinition, private readonly events: LevelEvents) {
+  public constructor(private readonly scene: THREE.Scene, private readonly physics: PhysicsWorld, private readonly level: LevelDefinition, private readonly events: LevelEvents, skinId: MarbleSkinId) {
     this.platforms = [...level.platforms, ...level.ramps].map((definition) => new Platform(physics, definition, level.world));
     this.movingPlatforms = level.movingPlatforms.map((definition) => new MovingPlatform(physics, definition, level.world));
     this.trampolines = level.trampolines.map((definition) => new Trampoline(physics, definition));
@@ -57,7 +58,7 @@ export class LevelEntities {
     this.conveyors.forEach((conveyor) => scene.add(conveyor.mesh));
     this.fans.forEach((fan) => scene.add(fan.mesh));
     this.hammers.forEach((hammer) => scene.add(hammer.mesh));
-    this.marble = new Marble(physics, level.spawn, level.marble);
+    this.marble = new Marble(physics, level.spawn, level.marble, skinId);
     scene.add(this.marble.mesh);
     this.gems = level.gems.map((definition) => createGem(physics, definition));
     this.checkpoints = level.checkpoints.map((definition) => createCheckpoint(physics, definition));

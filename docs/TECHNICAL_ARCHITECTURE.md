@@ -8,6 +8,7 @@
 - `src/levels/`: tipos, carga y validación de niveles JSON.
 - `src/input/`: controles táctiles, teclado y ratón.
 - `src/ui/`: HUD, pausa, selección y resultados.
+- `src/skins/`: catálogo tipado y fábrica visual de skins de la canica.
 - `src/styles/`: estilos globales y componentes de interfaz.
 - `public/assets/`: recursos estáticos ligeros.
 
@@ -18,3 +19,5 @@
 - La lógica de niveles no debe depender de posiciones escritas directamente en los componentes visuales.
 - Los datos de nivel deben poder cambiarse sin modificar el motor principal.
 - Mantener los assets opcionales; el MVP debe poder ejecutarse usando primitivas.
+- Mantener el collider esférico y las propiedades físicas independientes del skin seleccionado.
+- Añadir skins mediante el catálogo compartido, sin condicionales de navegación o física específicos por skin.

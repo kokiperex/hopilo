@@ -142,7 +142,7 @@ export class Game {
       onHazard: () => this.playFeedback('hazard', '¡Cuidado!'),
       onGoalReached: () => this.playFeedback('goal', '¡Meta!'),
       onCompleted: (collected) => this.completeLevel(level, collected),
-    });
+    }, this.progress.snapshot.selectedSkinId);
     this.cameraController.snapTo(this.entities.marble.mesh.position);
     this.hud.updateGemCounter(0, this.entities.gemTotal);
     this.hud.updateStars(0);

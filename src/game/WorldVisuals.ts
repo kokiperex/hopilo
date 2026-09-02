@@ -67,6 +67,7 @@ export function createPlatformMesh(size: { x: number; y: number; z: number }, co
 export function disposeVisual(object: THREE.Object3D): void {
   const geometries = new Set<THREE.BufferGeometry>();
   const materials = new Set<THREE.Material>();
+  const textures = new Set<THREE.Texture>();
   object.removeFromParent();
   object.traverse((child) => {
     if (!(child instanceof THREE.Mesh || child instanceof THREE.Points)) return;
@@ -75,5 +76,11 @@ export function disposeVisual(object: THREE.Object3D): void {
     else materials.add(child.material);
   });
   geometries.forEach((geometry) => geometry.dispose());
-  materials.forEach((material) => material.dispose());
+  materials.forEach((material) => {
+    Object.values(material).forEach((value) => {
+      if (value instanceof THREE.Texture) textures.add(value);
+    });
+    material.dispose();
+  });
+  textures.forEach((texture) => texture.dispose());
 }
