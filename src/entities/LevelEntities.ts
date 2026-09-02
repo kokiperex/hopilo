@@ -156,7 +156,8 @@ export class LevelEntities {
       this.events.onCheckpoint();
     });
     const intersectingHazard = this.hazards.find((hazard) => this.physics.world.intersectionPair(this.marble.collider, hazard.collider));
-    if (this.restartCooldown === 0 && (intersectingHazard || this.marble.body.translation().y < this.level.fallResetY)) {
+    const hitByHammer = this.hammers.some((hammer) => this.isTouching(hammer.collider));
+    if (this.restartCooldown === 0 && (intersectingHazard || hitByHammer || this.marble.body.translation().y < this.level.fallResetY)) {
       if (this.level.world === 'beach' && intersectingHazard?.definition.kind === 'water') this.addWaterSplash(intersectingHazard);
       this.marble.reactToHazard();
       this.events.onHazard();

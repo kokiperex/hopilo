@@ -38,7 +38,7 @@ export class Conveyor {
     const direction = Math.sign(this.definition.speed);
     const maxSpeed = this.definition.maxSpeed;
     if (maxSpeed !== undefined && direction * velocity.x >= maxSpeed) return;
-    marble.addForce({ x: this.definition.speed * 4, y: 0, z: 0 }, true);
+    marble.addForce({ x: this.definition.speed * 2, y: 0, z: 0 }, true);
   }
 
   public syncVisual(): void {

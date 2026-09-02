@@ -207,7 +207,7 @@ function addFeature(
   } else if (feature === 'bounce') {
     collections.trampolines.push({ id, position: { x: section.center, y: section.surfaceY + 0.16, z: 0 }, size: { x: Math.min(1.8, section.width * 0.34), y: 0.32, z: 2.15 }, launchSpeed: 10.5 + Math.min(levelIndex, 5) * 0.2, color: theme.accent });
   } else if (feature === 'fan') {
-    collections.fans.push({ id, position: { x: section.center, y: section.surfaceY + 1.2, z: 0 }, size: { x: Math.min(2.8, section.width * 0.52), y: 2.3, z: 2.55 }, direction: direction > 0 ? 'right' : 'left', force: 3.2, maxSpeed: 3.2, lift: 0.65, color: theme.accent });
+    collections.fans.push({ id, position: { x: section.center, y: section.surfaceY + 1.2, z: 0 }, size: { x: Math.min(2.8, section.width * 0.52), y: 2.3, z: 2.55 }, direction: direction > 0 ? 'right' : 'left', force: 1.8, maxSpeed: 3.2, lift: 0.65, color: theme.accent });
   } else if (feature === 'conveyor') {
     collections.conveyors.push({ id, position: { x: section.center, y: section.surfaceY + 0.16, z: 0 }, size: { x: Math.min(2.7, section.width * 0.52), y: 0.32, z: 2.3 }, speed: direction * (1.25 + levelIndex * 0.08), maxSpeed: 2.8, color: theme.accent });
   } else if (feature === 'hammer' || feature === 'spinner') {
