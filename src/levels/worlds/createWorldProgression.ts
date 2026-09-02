@@ -123,6 +123,19 @@ function createLevel(world: WorldId, theme: WorldProgressionTheme, beat: LevelBe
     traps.push({ id: 'featured-trap', kind: beat.trapKind, cue: cueForTrap(beat.trapKind), position: { x: cuePlatform.position.x, y: cuePlatform.position.y + 0.6, z: 0 }, size: { x: Math.min(2.4, cuePlatform.size.x * 0.5), y: 0.6, z: 2.6 }, color: theme.accent });
   }
 
+  // Faro de espuma is the first air-current lesson.  Its breeze must help a
+  // five-year-old clear the next gap, leaving steering as a gentle correction
+  // instead of continually returning the marble to the previous platform.
+  if (world === 'beach' && index === 4) {
+    const lessonFan = fans[0];
+    if (lessonFan) {
+      lessonFan.direction = 'right';
+      lessonFan.force = 1.35;
+      lessonFan.maxSpeed = 3.8;
+      lessonFan.lift = 0.45;
+    }
+  }
+
   const lastPlatform = platforms[platforms.length - 1];
   const goalX = lastPlatform.position.x + lastPlatform.size.x / 2 - 1.15;
   return {
