@@ -120,6 +120,11 @@ export class Marble implements PhysicsEntity {
     this.body.setTranslation(position, true);
     this.body.setLinvel({ x: 0, y: 0, z: 0 }, true);
     this.body.setAngvel({ x: 0, y: 0, z: 0 }, true);
+    // Conveyors use a persistent force. Clear Rapier's force accumulators as
+    // well as the velocity so a failed run cannot carry its momentum into the
+    // respawned marble.
+    this.body.resetForces(true);
+    this.body.resetTorques(true);
     this.secondsSinceGrounded = PHYSICS_CONFIG.marble.coyoteTime;
     this.jumpBufferSeconds = 0;
     this.jumpWasDown = false;

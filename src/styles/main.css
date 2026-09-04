@@ -896,13 +896,26 @@ canvas {
     z-index: 4;
     display: grid;
     place-items: center;
+    align-content: center;
+    gap: clamp(1rem, 4vh, 2rem);
     margin: 0;
     padding: 2rem;
     background: #8ed8ff;
     color: #17476d;
-    font-size: 1.125rem;
+    font-size: clamp(1rem, 3.8vw, 1.35rem);
     font-weight: 800;
     text-align: center;
+  }
+
+  .orientation-notice img {
+    display: block;
+    width: min(88vw, 35rem);
+    max-height: 31vh;
+    object-fit: contain;
+  }
+
+  .orientation-notice span {
+    max-width: 25rem;
   }
 }
 
