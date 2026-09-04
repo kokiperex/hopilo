@@ -245,7 +245,7 @@ function addFeature(feature: SectionFeature, section: RouteSection, sectionIndex
   } else if (feature === 'hammer' || feature === 'spinner') {
     collections.hammers.push({ id, position: { x: section.center, y: section.surfaceY + 2.25, z: 0 }, length: 1.55, thickness: 0.34, mode: feature === 'spinner' ? 'spin' : 'swing', cyclesPerSecond: feature === 'spinner' ? 0.115 + levelIndex * 0.003 : 0.16 + levelIndex * 0.005, swingAngle: Math.PI / 2.5, startAngle: -Math.PI / 2 + (sectionIndex % 2 === 0 ? -0.24 : 0.24), color: theme.accent });
   } else if (feature === 'moving-wall') {
-    collections.movingPlatforms.push({ id, position: { x: section.center, y: section.surfaceY + 1.15, z: 0 }, from: { x: section.center - 1.05, y: section.surfaceY + 1.15, z: 0 }, to: { x: section.center + 1.05, y: section.surfaceY + 1.15, z: 0 }, size: { x: 0.36, y: 2.15, z: 2.4 }, cyclesPerSecond: 0.13 + levelIndex * 0.004, color: theme.accent });
+    collections.movingPlatforms.push({ id, position: { x: section.center, y: section.surfaceY + 1.15, z: 0 }, from: { x: section.center - 1.05, y: section.surfaceY + 1.15, z: 0 }, to: { x: section.center + 1.05, y: section.surfaceY + 1.15, z: 0 }, size: { x: 0.36, y: 2.0, z: 2.4 }, cyclesPerSecond: 0.13 + levelIndex * 0.004, color: theme.accent });
   } else if (feature === 'spikes') {
     collections.hazards.push({ id, kind: 'spikes', position: { x: section.center, y: section.surfaceY + 0.27, z: 0 }, size: { x: Math.min(1.2, section.width * 0.4), y: 0.55, z: 2.35 } });
   }

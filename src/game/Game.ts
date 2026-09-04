@@ -142,10 +142,10 @@ export class Game {
     this.accumulator = 0;
     this.input.clear();
     this.entities = new LevelEntities(this.scene, this.physics, level, {
-      onJump: () => this.playFeedback('jump', '¡Hop!'),
+      onJump: () => this.playFeedback('jump'),
       onGemCollected: (collected) => {
         this.hud.updateGemCounter(collected, this.entities?.gemTotal ?? 0);
-        this.playFeedback('gem', '¡Gema!');
+        this.playFeedback('gem');
       },
       onCheckpoint: () => this.playFeedback('checkpoint', '¡Guardado!'),
       onHazard: () => this.playFeedback('hazard', '¡Cuidado!'),
@@ -240,8 +240,8 @@ export class Game {
     this.hud.setAudioEnabled(enabled);
   }
 
-  private playFeedback(kind: FeedbackKind, message: string): void {
-    this.hud.showFeedback(kind, message);
+  private playFeedback(kind: FeedbackKind, message?: string): void {
+    if (message) this.hud.showFeedback(kind, message);
     this.audio.play(kind);
   }
 
