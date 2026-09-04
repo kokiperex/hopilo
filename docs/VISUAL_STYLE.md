@@ -13,6 +13,9 @@
 - Mantener una silueta de canica clara y una escala visual consistente en los siete skins del MVP.
 - Usar una estela luminosa sutil sin ocultar obstáculos.
 - Aplicar animaciones simples de rebote y squash & stretch.
+- Combinar superficies primitivas exactas con chapas modulares low-poly muy finas: arena y bordes turquesa en Playa; tablones y listones en Madera; paneles con juntas tenues en Espacio; tierra, raíz y hierba espaciada en Bosque.
+- Mantener los props importados detrás de la ruta y con una densidad máxima aproximada de dos o tres siluetas por ancho de cámara.
+- Mantener VFX por debajo de un segundo, con pocas partículas, pooling y reducción adicional cuando `prefers-reduced-motion` esté activo.
 
 ## Consistencia
 

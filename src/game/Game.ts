@@ -1,5 +1,6 @@
 import RAPIER from '@dimforge/rapier3d-compat';
 import * as THREE from 'three';
+import { VisualAssetLoader } from '../assets/VisualAssetLoader';
 import { LevelEntities } from '../entities/LevelEntities';
 import { InputController } from '../input/InputController';
 import { LevelLoader } from '../levels/LevelLoader';
@@ -16,6 +17,8 @@ import { createNavigation, type Navigation } from '../ui/Navigation';
 import { CameraController } from './CameraController';
 import { GAME_CONFIG } from './config';
 import { createWorldScene, disposeWorldScene } from './createWorldScene';
+import { WorldDecorationLayer } from '../visuals/decoration/WorldDecorationLayer';
+import { SurfaceAssetLayer } from '../visuals/surfaces/SurfaceAssetLayer';
 
 export class Game {
   private readonly scene = new THREE.Scene();
@@ -30,9 +33,12 @@ export class Game {
   private readonly progress = new ProgressStore();
   private readonly audio = new AudioManager(this.progress.snapshot.audioEnabled);
   private readonly levelLoader = new LevelLoader(LEVEL_CATALOG);
+  private readonly assets = new VisualAssetLoader();
   private physics: PhysicsWorld | undefined;
   private entities: LevelEntities | undefined;
   private worldScene: THREE.Group | undefined;
+  private worldAssets: WorldDecorationLayer | undefined;
+  private surfaceAssets: SurfaceAssetLayer | undefined;
   private accumulator = 0;
   private animationFrame = 0;
   private running = false;
@@ -109,6 +115,7 @@ export class Game {
     this.hud.dispose();
     this.navigation.dispose();
     this.disposeLevel();
+    this.assets.dispose();
     this.physics?.dispose();
     this.timer.dispose();
     this.renderer.dispose();
@@ -128,6 +135,8 @@ export class Game {
     this.scene.background = null;
     this.renderer.setClearColor(WORLD_META[level.world].sceneColor);
     this.worldScene = createWorldScene(this.scene, level);
+    this.worldAssets = new WorldDecorationLayer(this.scene, level, this.assets);
+    this.surfaceAssets = new SurfaceAssetLayer(this.scene, level, this.assets);
     this.finished = false;
     this.paused = false;
     this.accumulator = 0;
@@ -142,7 +151,7 @@ export class Game {
       onHazard: () => this.playFeedback('hazard', '¡Cuidado!'),
       onGoalReached: () => this.playFeedback('goal', '¡Meta!'),
       onCompleted: (collected) => this.completeLevel(level, collected),
-    }, this.progress.snapshot.selectedSkinId);
+    }, this.progress.snapshot.selectedSkinId, this.assets);
     this.cameraController.snapTo(this.entities.marble.mesh.position);
     this.hud.updateGemCounter(0, this.entities.gemTotal);
     this.hud.updateStars(0);
@@ -188,7 +197,7 @@ export class Game {
     }
 
     if (this.paused) this.accumulator = 0;
-    this.entities.syncVisual(this.accumulator / PHYSICS_CONFIG.fixedTimeStep, !this.paused);
+    this.entities.syncVisual(this.accumulator / PHYSICS_CONFIG.fixedTimeStep, !this.paused, delta);
     this.cameraController.update(this.entities.marble.mesh.position, delta);
     this.renderer.render(this.scene, this.camera);
     this.animationFrame = requestAnimationFrame(this.frame);
@@ -275,6 +284,10 @@ export class Game {
     window.clearTimeout(this.finishTimer);
     this.entities?.dispose();
     this.entities = undefined;
+    this.surfaceAssets?.dispose();
+    this.surfaceAssets = undefined;
+    this.worldAssets?.dispose();
+    this.worldAssets = undefined;
     if (this.worldScene) disposeWorldScene(this.worldScene);
     this.worldScene = undefined;
     this.accumulator = 0;

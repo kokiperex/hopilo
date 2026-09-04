@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import type { InputState } from '../input/InputController';
 import type { LevelDefinition } from '../levels/types';
+import type { VisualAssetLoader } from '../assets/VisualAssetLoader';
 import { PHYSICS_CONFIG } from '../physics/constants';
 import type { PhysicsWorld } from '../physics/PhysicsWorld';
 import { Marble } from './Marble';
@@ -11,9 +12,10 @@ import { Trampoline } from './Trampoline';
 import { Conveyor } from './Conveyor';
 import { Fan } from './Fan';
 import { Hammer } from './Hammer';
-import { WaterSplash } from './WaterSplash';
 import type { PhysicsEntity } from './types';
 import type { MarbleSkinId } from '../skins/skinCatalog';
+import { SurfaceSkinFactory } from '../visuals/surfaces/SurfaceSkinFactory';
+import { VfxSystem } from '../vfx/VfxSystem';
 
 export interface LevelEvents {
   onJump(): void;
@@ -36,8 +38,9 @@ export class LevelEntities {
   private readonly gems: GemItem[];
   private readonly checkpoints: CheckpointItem[];
   private readonly hazards: HazardItem[];
-  private readonly waterSplashes: WaterSplash[] = [];
   private readonly goal: GoalItem;
+  private readonly surfaceSkins: SurfaceSkinFactory;
+  private readonly vfx: VfxSystem;
   private respawnPosition: THREE.Vector3;
   private collectedGems = 0;
   private restartCount = 0;
@@ -45,12 +48,15 @@ export class LevelEntities {
   private complete = false;
   private elapsedSeconds = 0;
 
-  public constructor(private readonly scene: THREE.Scene, private readonly physics: PhysicsWorld, private readonly level: LevelDefinition, private readonly events: LevelEvents, skinId: MarbleSkinId) {
-    this.platforms = [...level.platforms, ...level.ramps].map((definition) => new Platform(physics, definition, level.world));
-    this.movingPlatforms = level.movingPlatforms.map((definition) => new MovingPlatform(physics, definition, level.world));
+  public constructor(scene: THREE.Scene, private readonly physics: PhysicsWorld, private readonly level: LevelDefinition, private readonly events: LevelEvents, skinId: MarbleSkinId, assets: VisualAssetLoader) {
+    this.surfaceSkins = new SurfaceSkinFactory(level.world);
+    this.vfx = new VfxSystem(scene, assets, level.world);
+    this.platforms = [...level.platforms, ...level.ramps].map((definition) => new Platform(physics, definition, this.surfaceSkins));
+    this.movingPlatforms = level.movingPlatforms.map((definition) => new MovingPlatform(physics, definition, this.surfaceSkins));
     this.trampolines = level.trampolines.map((definition) => new Trampoline(physics, definition));
     this.conveyors = level.conveyors.map((definition) => new Conveyor(physics, definition));
     this.fans = level.fans.map((definition) => new Fan(physics, definition));
+    level.fans.forEach((definition) => this.vfx.registerFan(definition));
     this.hammers = level.hammers.map((definition) => new Hammer(physics, definition));
     this.platforms.forEach((platform) => scene.add(platform.mesh));
     this.movingPlatforms.forEach((platform) => scene.add(platform.mesh));
@@ -76,13 +82,14 @@ export class LevelEntities {
     if (this.complete) return;
     const jumped = this.marble.applyInput(input, [...this.platforms, ...this.movingPlatforms, ...this.trampolines, ...this.conveyors]);
     if (jumped) this.events.onJump();
+    if (this.marble.consumeLanding()) this.vfx.emitLanding(this.marble.mesh.position);
     this.dynamicEntities.forEach((entity) => entity.beforePhysicsStep());
     this.applySurfaceEffects();
     this.restartCooldown = Math.max(0, this.restartCooldown - PHYSICS_CONFIG.fixedTimeStep);
     this.evaluateInteractions();
   }
 
-  public syncVisual(interpolation: number, animate = true): void {
+  public syncVisual(interpolation: number, animate = true, deltaSeconds = 1 / 60): void {
     this.dynamicEntities.forEach((entity) => entity.syncVisual(interpolation));
     if (!animate) return;
     this.elapsedSeconds += 1 / 60;
@@ -105,10 +112,7 @@ export class LevelEntities {
     this.goal.celebration = Math.max(0, this.goal.celebration - 1 / 42);
     const goalScale = 1 + this.goal.celebration * 0.18;
     this.goal.mesh.scale.set(goalScale, goalScale, goalScale);
-    this.waterSplashes.forEach((splash) => splash.update(1 / 60));
-    const expiredSplashes = this.waterSplashes.filter((splash) => splash.finished);
-    expiredSplashes.forEach((splash) => splash.dispose());
-    this.waterSplashes.splice(0, this.waterSplashes.length, ...this.waterSplashes.filter((splash) => !splash.finished));
+    this.vfx.update(deltaSeconds);
   }
 
   public restart(): void {
@@ -132,11 +136,12 @@ export class LevelEntities {
     this.trampolines.forEach((trampoline) => trampoline.dispose());
     this.conveyors.forEach((conveyor) => conveyor.dispose());
     this.fans.forEach((fan) => fan.dispose());
-    this.waterSplashes.forEach((splash) => splash.dispose());
     [...this.gems, ...this.checkpoints, ...this.hazards, this.goal].forEach((item) => {
       this.physics.removeBody(item.body);
       disposeObject(item.mesh);
     });
+    this.vfx.dispose();
+    this.surfaceSkins.dispose();
   }
 
   private evaluateInteractions(): void {
@@ -145,6 +150,7 @@ export class LevelEntities {
       gem.collected = true;
       gem.mesh.visible = false;
       this.collectedGems += 1;
+      this.vfx.emitGem(gem.definition.position);
       this.events.onGemCollected(this.collectedGems);
     });
     this.checkpoints.forEach((checkpoint) => {
@@ -159,7 +165,7 @@ export class LevelEntities {
     const intersectingHazard = this.hazards.find((hazard) => this.physics.world.intersectionPair(this.marble.collider, hazard.collider));
     const hitByHammer = this.hammers.some((hammer) => this.isTouching(hammer.collider));
     if (this.restartCooldown === 0 && (intersectingHazard || hitByHammer || this.marble.body.translation().y < this.level.fallResetY)) {
-      if (this.level.world === 'beach' && intersectingHazard?.definition.kind === 'water') this.addWaterSplash(intersectingHazard);
+      if (intersectingHazard?.definition.kind === 'water') this.emitWaterSplash(intersectingHazard);
       this.marble.reactToHazard();
       this.events.onHazard();
       this.restart();
@@ -167,6 +173,7 @@ export class LevelEntities {
     if (this.physics.world.intersectionPair(this.marble.collider, this.goal.collider)) {
       this.complete = true;
       this.goal.celebration = 1;
+      this.vfx.emitGoal(this.goal.definition.position);
       this.events.onGoalReached();
       this.events.onCompleted(this.collectedGems);
     }
@@ -188,12 +195,10 @@ export class LevelEntities {
     });
   }
 
-  private addWaterSplash(hazard: HazardItem): void {
+  private emitWaterSplash(hazard: HazardItem): void {
     const marblePosition = this.marble.body.translation();
     const surfaceY = hazard.definition.position.y + hazard.definition.size.y / 2 + 0.04;
-    const splash = new WaterSplash(new THREE.Vector3(marblePosition.x, surfaceY, marblePosition.z));
-    this.waterSplashes.push(splash);
-    this.scene.add(splash.mesh);
+    this.vfx.emitWater({ x: marblePosition.x, y: surfaceY, z: marblePosition.z });
   }
 
   private isTouching(collider: import('@dimforge/rapier3d-compat').Collider): boolean {

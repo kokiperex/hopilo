@@ -10,8 +10,6 @@ export class Fan {
   public readonly body: RAPIER.RigidBody;
   public readonly collider: RAPIER.Collider;
   private readonly blades = new THREE.Group();
-  private readonly gusts: THREE.Mesh<THREE.SphereGeometry, THREE.MeshBasicMaterial>[] = [];
-  private phase = 0;
   private hasPushedMarble = false;
 
   public constructor(private readonly physics: PhysicsWorld, private readonly definition: FanDefinition) {
@@ -29,12 +27,6 @@ export class Fan {
     }
     this.blades.position.copy(housing.position);
     this.mesh.add(housing, this.blades);
-    for (let index = 0; index < 3; index += 1) {
-      const gust = new THREE.Mesh(new THREE.SphereGeometry(0.08 + index * 0.025, 8, 6), new THREE.MeshBasicMaterial({ color: '#e3fbff', transparent: true, opacity: 0.56 - index * 0.1 }));
-      gust.position.set(direction * (0.45 + index * 0.42), 0.2 + (index % 2) * 0.28, 0);
-      this.gusts.push(gust);
-      this.mesh.add(gust);
-    }
     this.mesh.position.set(definition.position.x, definition.position.y, definition.position.z);
     ({ body: this.body, collider: this.collider } = physics.createSensorBox(definition.position, definition.size));
   }
@@ -57,13 +49,7 @@ export class Fan {
   }
 
   public syncVisual(): void {
-    this.phase += 0.18;
     this.blades.rotation.z -= 0.24;
-    const direction = this.definition.direction === 'right' ? 1 : -1;
-    this.gusts.forEach((gust, index) => {
-      gust.position.x = direction * (0.38 + THREE.MathUtils.euclideanModulo(this.phase * 0.8 + index * 0.38, 1.15));
-      gust.material.opacity = 0.28 + 0.24 * (0.5 + Math.sin(this.phase * 2 + index) * 0.5);
-    });
   }
 
   public dispose(): void {

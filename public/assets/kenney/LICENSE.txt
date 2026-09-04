@@ -1,28 +1,15 @@
-	
+Kenney assets in this directory are released under Creative Commons Zero (CC0).
 
-	Marble Kit (2.0)
+CC0 1.0 Universal: https://creativecommons.org/publicdomain/zero/1.0/
 
-	Created/distributed by Kenney (www.kenney.nl)
-	Creation date: 22-05-2024 15:36
-	
-			------------------------------
+You may use the content in personal, educational and commercial projects. Crediting Kenney or https://kenney.nl is appreciated but is not mandatory.
 
-	License: (Creative Commons Zero, CC0)
-	http://creativecommons.org/publicdomain/zero/1.0/
+Curated source packs:
 
-	You can use this content for personal, educational, and commercial purposes.
+- Minigolf Kit 3.1 — https://kenney.nl/assets/minigolf-kit
+- Mini Forest 1.0 — https://kenney.nl/assets/mini-forest
+- Particle Pack 1.1 — https://kenney.nl/assets/particle-pack
+- UI Pack 2.0 — https://kenney.nl/assets/ui-pack
+- Mobile Controls — https://kenney.nl/assets/mobile-controls
 
-	Support by crediting 'Kenney' or 'www.kenney.nl' (this is not a requirement)
-
-			------------------------------
-
-	• Website : www.kenney.nl
-	• Donate  : www.kenney.nl/donate
-
-	• Patreon : patreon.com/kenney
-	
-	Follow on social media for updates:
-
-	• Twitter:   twitter.com/KenneyNL
-	• Instagram: instagram.com/kenney_nl
-	• Mastodon:  mastodon.gamedev.place/@kenney
+The exact imported files and their purposes are documented in README.md in this directory.

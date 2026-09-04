@@ -4,8 +4,7 @@ import type { MovingPlatformDefinition } from '../levels/types';
 import { PHYSICS_CONFIG } from '../physics/constants';
 import type { PhysicsWorld } from '../physics/PhysicsWorld';
 import type { PhysicsEntity } from './types';
-import type { WorldId } from '../levels/types';
-import { createPlatformMesh, disposeVisual } from '../game/WorldVisuals';
+import type { SurfaceSkinFactory } from '../visuals/surfaces/SurfaceSkinFactory';
 
 /** Kinematic solid generated exclusively from a moving-platform level definition. */
 export class MovingPlatform implements PhysicsEntity {
@@ -14,8 +13,8 @@ export class MovingPlatform implements PhysicsEntity {
   public readonly collider: RAPIER.Collider;
   private elapsedSeconds = 0;
 
-  public constructor(private readonly physics: PhysicsWorld, private readonly definition: MovingPlatformDefinition, world: WorldId) {
-    this.mesh = createPlatformMesh(definition.size, definition.color ?? '#d99648', world);
+  public constructor(private readonly physics: PhysicsWorld, private readonly definition: MovingPlatformDefinition, surfaces: SurfaceSkinFactory) {
+    this.mesh = surfaces.create(definition.size, definition.color ?? '#d99648');
     const physicsObject = physics.createKinematicBox(definition.position, definition.size);
     this.body = physicsObject.body;
     this.collider = physicsObject.collider;
@@ -39,7 +38,7 @@ export class MovingPlatform implements PhysicsEntity {
 
   public dispose(): void {
     this.physics.removeBody(this.body);
-    disposeVisual(this.mesh);
+    this.mesh.removeFromParent();
   }
 
   private setPosition(position: MovingPlatformDefinition['position']): void {

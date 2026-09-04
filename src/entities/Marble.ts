@@ -30,6 +30,8 @@ export class Marble implements PhysicsEntity {
   private secondsSinceGrounded = 0;
   private jumpPulse = 0;
   private hitPulse = 0;
+  private peakFallSpeed = 0;
+  private landedThisStep = false;
 
   public constructor(private readonly physics: PhysicsWorld, spawn: Vec3Data, definition: MarbleDefinition = {}, skinId: MarbleSkinId = DEFAULT_MARBLE_SKIN_ID) {
     const radius = definition.radius ?? DEFAULT_RADIUS;
@@ -86,9 +88,14 @@ export class Marble implements PhysicsEntity {
       this.jumpBufferSeconds = Math.max(0, this.jumpBufferSeconds - PHYSICS_CONFIG.fixedTimeStep);
     }
 
-    if (this.isOnPlatform(platforms)) {
+    const wasAirborne = this.secondsSinceGrounded > 0.1;
+    const grounded = this.isOnPlatform(platforms);
+    if (grounded) {
+      this.landedThisStep ||= wasAirborne && this.peakFallSpeed > 1.3;
+      this.peakFallSpeed = 0;
       this.secondsSinceGrounded = 0;
     } else {
+      this.peakFallSpeed = Math.max(this.peakFallSpeed, -velocity.y);
       this.secondsSinceGrounded += PHYSICS_CONFIG.fixedTimeStep;
     }
     let jumped = false;
@@ -103,6 +110,12 @@ export class Marble implements PhysicsEntity {
     return jumped;
   }
 
+  public consumeLanding(): boolean {
+    const landed = this.landedThisStep;
+    this.landedThisStep = false;
+    return landed;
+  }
+
   public reset(position: Vec3Data): void {
     this.body.setTranslation(position, true);
     this.body.setLinvel({ x: 0, y: 0, z: 0 }, true);
@@ -110,6 +123,8 @@ export class Marble implements PhysicsEntity {
     this.secondsSinceGrounded = PHYSICS_CONFIG.marble.coyoteTime;
     this.jumpBufferSeconds = 0;
     this.jumpWasDown = false;
+    this.peakFallSpeed = 0;
+    this.landedThisStep = false;
     this.setPosition(position);
   }
 

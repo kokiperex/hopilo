@@ -3,6 +3,7 @@ import { WORLD_META, WORLD_ORDER } from '../levels/worldMeta';
 import type { LevelDefinition, WorldId } from '../levels/types';
 import { ProgressStore } from '../progress/ProgressStore';
 import { isMarbleSkinId, MARBLE_SKINS, type MarbleSkinDefinition } from '../skins/skinCatalog';
+import { uiAssetUrl } from '../assets/catalog';
 
 export interface ResultViewModel {
   levelId: string;
@@ -36,6 +37,7 @@ const checkIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 
 export function createNavigation(root: HTMLElement, progress: ProgressStore, callbacks: NavigationCallbacks): Navigation {
   const element = document.createElement('section');
   element.className = 'game-navigation';
+  element.style.setProperty('--kenney-ui-panel', `url("${uiAssetUrl('panel-border')}")`);
   element.setAttribute('aria-live', 'polite');
   root.append(element);
 
@@ -56,6 +58,7 @@ export function createNavigation(root: HTMLElement, progress: ProgressStore, cal
               ? settingsMarkup()
               : resetMarkup();
     bindActions();
+    bindOptionalImageFallbacks(element);
     element.querySelector<HTMLElement>('[data-autofocus]')?.focus({ preventScroll: true });
   };
 
@@ -184,7 +187,7 @@ export function createNavigation(root: HTMLElement, progress: ProgressStore, cal
             return `<button class="level-button${unlocked ? '' : ' is-locked'}" type="button" data-action="play" data-level="${level.id}" ${unlocked ? '' : 'disabled'}>
               <span class="level-heading"><span class="level-number">${index + 1}</span><strong>${level.name}</strong></span>
               <span class="level-lesson">${level.lesson}</span>
-              <span class="level-stars" aria-label="${saved.stars} de 3 estrellas">${[0, 1, 2].map((star) => `<i class="${star < saved.stars ? 'is-earned' : ''}">${starIcon}</i>`).join('')}</span>
+              <span class="level-stars" aria-label="${saved.stars} de 3 estrellas">${[0, 1, 2].map((star) => uiStarMarkup(star < saved.stars)).join('')}</span>
               <span class="level-status">${unlocked ? (saved.stars > 0 ? 'Jugar otra vez' : '¡Vamos!') : lockIcon}</span>
             </button>`;
           }).join('')}</div>
@@ -218,12 +221,27 @@ export function createNavigation(root: HTMLElement, progress: ProgressStore, cal
       const level = LEVEL_CATALOG.find(({ id }) => id === result.levelId);
       if (level) selectedWorld = level.world;
       const next = level ? LEVEL_CATALOG[LEVEL_CATALOG.findIndex(({ id }) => id === level.id) + 1] : undefined;
-      const starRow = [0, 1, 2].map((index) => `<i class="${index < result.stars ? 'is-earned' : ''}">${starIcon}</i>`).join('');
+      const starRow = [0, 1, 2].map((index) => uiStarMarkup(index < result.stars)).join('');
       element.innerHTML = `<div class="nav-sky nav-result"><section class="result-sheet"><p class="result-title">¡Meta!</p><div class="result-stars" aria-label="${result.stars} de 3 estrellas">${starRow}</div><p class="result-message">${result.isNewBest ? '¡Nuevo récord de estrellas!' : '¡Lo hiciste muy bien!'}</p><p class="result-gems">${gemIcon}<span>${result.collected} de ${result.total} gemas</span></p><div class="result-actions"><button class="nav-secondary-button" type="button" data-action="levels">Niveles</button><button class="nav-primary-button" type="button" data-action="play" data-level="${next?.id ?? result.levelId}" data-autofocus>${playIcon}<span>${next ? 'Siguiente' : 'Jugar otra vez'}</span></button></div></section></div>`;
       bindActions();
+      bindOptionalImageFallbacks(element);
       element.querySelector<HTMLElement>('[data-autofocus]')?.focus({ preventScroll: true });
     },
     hide: (): void => { element.hidden = true; },
     dispose: (): void => element.remove(),
   };
+}
+
+function uiStarMarkup(earned: boolean): string {
+  const source = uiAssetUrl(earned ? 'star-filled' : 'star-outline');
+  return `<i class="${earned ? 'is-earned' : ''}">${starIcon}<img class="kenney-star" src="${source}" alt="" aria-hidden="true" data-optional-asset></i>`;
+}
+
+function bindOptionalImageFallbacks(root: ParentNode): void {
+  root.querySelectorAll<HTMLImageElement>('[data-optional-asset]').forEach((image) => {
+    image.addEventListener('error', () => {
+      image.hidden = true;
+      image.parentElement?.classList.add('is-asset-fallback');
+    }, { once: true });
+  });
 }

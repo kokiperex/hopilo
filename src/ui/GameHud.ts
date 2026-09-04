@@ -1,3 +1,5 @@
+import { uiAssetUrl } from '../assets/catalog';
+
 export interface GameHudCallbacks {
   onPause(): void;
   onResume(): void;
@@ -40,11 +42,13 @@ const kenneyControlIcon = (name: 'pause' | 'left' | 'right' | 'jump'): string =>
 export function createGameHud(root: HTMLElement, callbacks: GameHudCallbacks, audioEnabled = true): GameHud {
   const element = document.createElement('section');
   element.className = 'game-hud';
+  element.style.setProperty('--kenney-ui-panel', `url("${uiAssetUrl('panel-border')}")`);
+  element.style.setProperty('--kenney-ui-pause', `url("${uiAssetUrl('pause-tile')}")`);
   element.innerHTML = `
     <div class="hud-top-left">
       <button class="hud-button hud-pause" type="button" aria-label="Pausar">${kenneyControlIcon('pause')}</button>
       <div class="hud-stars" aria-label="Estrellas conseguidas: 0 de 3">
-        <span class="hud-star">${icon('star')}</span><span class="hud-star">${icon('star')}</span><span class="hud-star">${icon('star')}</span>
+        <span class="hud-star">${icon('star')}${uiStarImages()}</span><span class="hud-star">${icon('star')}${uiStarImages()}</span><span class="hud-star">${icon('star')}${uiStarImages()}</span>
       </div>
     </div>
     <div class="hud-gems" aria-label="Gemas recogidas">${icon('gem')}<span>0 / 1</span></div>
@@ -65,6 +69,7 @@ export function createGameHud(root: HTMLElement, callbacks: GameHudCallbacks, au
     </section>
   `;
   root.append(element);
+  bindOptionalImageFallbacks(element);
 
   const select = <T extends Element>(selector: string): T => {
     const node = element.querySelector<T>(selector);
@@ -149,4 +154,17 @@ export function createGameHud(root: HTMLElement, callbacks: GameHudCallbacks, au
       element.remove();
     },
   };
+}
+
+function uiStarImages(): string {
+  return `<img class="kenney-star kenney-star-outline" src="${uiAssetUrl('star-outline')}" alt="" aria-hidden="true" data-optional-asset><img class="kenney-star kenney-star-filled" src="${uiAssetUrl('star-filled')}" alt="" aria-hidden="true" data-optional-asset>`;
+}
+
+function bindOptionalImageFallbacks(root: ParentNode): void {
+  root.querySelectorAll<HTMLImageElement>('[data-optional-asset]').forEach((image) => {
+    image.addEventListener('error', () => {
+      image.hidden = true;
+      image.parentElement?.classList.add('is-asset-fallback');
+    }, { once: true });
+  });
 }
