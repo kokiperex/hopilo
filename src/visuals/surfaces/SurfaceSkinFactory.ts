@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
 import type { WorldId } from '../../levels/types';
 
 interface SurfacePalette {
@@ -20,8 +21,9 @@ const PALETTES: Record<WorldId, SurfacePalette> = {
 
 /** Per-level factory: meshes share unit geometry and materials, then the whole pool is released together. */
 export class SurfaceSkinFactory {
-  private readonly unitBox = new THREE.BoxGeometry(1, 1, 1);
   private readonly unitCylinder = new THREE.CylinderGeometry(0.5, 0.5, 1, 8);
+  private readonly roundedBoxes = new Map<string, RoundedBoxGeometry>();
+  private readonly railGeometries = new Map<string, THREE.CapsuleGeometry>();
   private readonly materials = new Map<string, THREE.MeshStandardMaterial>();
 
   public constructor(private readonly world: WorldId) {}
@@ -33,9 +35,13 @@ export class SurfaceSkinFactory {
     const baseColor = mixHex(palette.side, sourceColor, 0.2);
     const topColor = mixHex(palette.top, sourceColor, 0.18);
 
-    const base = this.box(size.x, size.y, size.z, this.material(baseColor, 'base', palette));
+    const base = this.roundedBox(size, this.material(baseColor, 'base', palette));
     const capHeight = Math.min(0.13, Math.max(0.065, size.y * 0.15));
-    const cap = this.box(size.x * 0.985, capHeight, size.z * 0.97, this.material(topColor, 'top', palette));
+    const cap = this.roundedBox(
+      { x: size.x * 0.985, y: capHeight, z: size.z * 0.97 },
+      this.material(topColor, 'top', palette),
+      Math.min(0.055, capHeight * 0.42),
+    );
     cap.position.y = size.y / 2 + capHeight / 2 - 0.018;
     group.add(base, cap);
 
@@ -53,8 +59,11 @@ export class SurfaceSkinFactory {
   }
 
   public dispose(): void {
-    this.unitBox.dispose();
     this.unitCylinder.dispose();
+    this.roundedBoxes.forEach((geometry) => geometry.dispose());
+    this.roundedBoxes.clear();
+    this.railGeometries.forEach((geometry) => geometry.dispose());
+    this.railGeometries.clear();
     this.materials.forEach((material) => material.dispose());
     this.materials.clear();
   }
@@ -62,14 +71,14 @@ export class SurfaceSkinFactory {
   private addBeachDetails(group: THREE.Group, size: { x: number; y: number; z: number }, palette: SurfacePalette, capHeight: number): void {
     const trim = this.material(palette.trim, 'trim', palette);
     [-1, 1].forEach((side) => {
-      const rail = this.box(size.x * 0.99, 0.055, 0.07, trim);
+      const rail = this.rail(size.x * 0.96, 0.038, trim);
       rail.position.set(0, size.y / 2 + capHeight + 0.008, side * (size.z / 2 - 0.055));
       group.add(rail);
     });
     if (size.x > 2.2) {
       const board = this.material(palette.detail, 'detail', palette);
       [-0.22, 0.22].forEach((offset) => {
-        const seam = this.box(0.055, 0.024, size.z * 0.76, board);
+        const seam = this.rail(size.z * 0.7, 0.014, board, 'z');
         seam.position.set(offset * size.x, size.y / 2 + capHeight + 0.012, 0);
         group.add(seam);
       });
@@ -80,13 +89,13 @@ export class SurfaceSkinFactory {
     const seamMaterial = this.material(palette.detail, 'detail', palette);
     const seamCount = Math.min(5, Math.max(2, Math.floor(size.x / 1.55)));
     for (let index = 1; index < seamCount; index += 1) {
-      const seam = this.box(0.035, 0.026, size.z * 0.9, seamMaterial);
+      const seam = this.rail(size.z * 0.84, 0.013, seamMaterial, 'z');
       seam.position.set(-size.x / 2 + (index * size.x) / seamCount, size.y / 2 + capHeight + 0.013, 0);
       group.add(seam);
     }
     const trim = this.material(palette.trim, 'trim', palette);
     [-1, 1].forEach((side) => {
-      const slat = this.box(size.x * 0.96, 0.045, 0.065, trim);
+      const slat = this.rail(size.x * 0.93, 0.032, trim);
       slat.position.set(0, size.y / 2 + capHeight + 0.012, side * (size.z / 2 - 0.08));
       group.add(slat);
     });
@@ -95,12 +104,12 @@ export class SurfaceSkinFactory {
   private addSpaceDetails(group: THREE.Group, size: { x: number; y: number; z: number }, palette: SurfacePalette, capHeight: number): void {
     const trim = this.material(palette.trim, 'trim', palette, palette.emissive, 0.28);
     [-1, 1].forEach((side) => {
-      const joint = this.box(size.x * 0.9, 0.045, 0.075, trim);
+      const joint = this.rail(size.x * 0.88, 0.032, trim);
       joint.position.set(0, size.y / 2 + capHeight + 0.016, side * (size.z / 2 - 0.12));
       group.add(joint);
     });
     const panel = this.material(palette.detail, 'detail', palette, palette.emissive, 0.2);
-    const divider = this.box(0.045, 0.035, size.z * 0.7, panel);
+    const divider = this.rail(size.z * 0.64, 0.016, panel, 'z');
     divider.position.y = size.y / 2 + capHeight + 0.018;
     group.add(divider);
   }
@@ -108,7 +117,7 @@ export class SurfaceSkinFactory {
   private addForestDetails(group: THREE.Group, size: { x: number; y: number; z: number }, palette: SurfacePalette, capHeight: number): void {
     const bark = this.material(palette.trim, 'trim', palette);
     [-1, 1].forEach((side) => {
-      const root = this.box(size.x * 0.98, 0.1, 0.1, bark);
+      const root = this.rail(size.x * 0.95, 0.055, bark);
       root.position.set(0, size.y / 2 + capHeight * 0.45, side * (size.z / 2 - 0.06));
       group.add(root);
     });
@@ -123,10 +132,31 @@ export class SurfaceSkinFactory {
     }
   }
 
-  private box(x: number, y: number, z: number, material: THREE.Material): THREE.Mesh {
-    const mesh = new THREE.Mesh(this.unitBox, material);
-    mesh.scale.set(x, y, z);
+  private roundedBox(size: { x: number; y: number; z: number }, material: THREE.Material, radius = this.roundingFor(size)): THREE.Mesh {
+    const key = `${size.x.toFixed(3)}:${size.y.toFixed(3)}:${size.z.toFixed(3)}:${radius.toFixed(3)}`;
+    let geometry = this.roundedBoxes.get(key);
+    if (!geometry) {
+      geometry = new RoundedBoxGeometry(size.x, size.y, size.z, 2, radius);
+      this.roundedBoxes.set(key, geometry);
+    }
+    return new THREE.Mesh(geometry, material);
+  }
+
+  private rail(length: number, radius: number, material: THREE.Material, axis: 'x' | 'z' = 'x'): THREE.Mesh {
+    const straightLength = Math.max(0.012, length - radius * 2);
+    const key = `${straightLength.toFixed(3)}:${radius.toFixed(3)}`;
+    let geometry = this.railGeometries.get(key);
+    if (!geometry) {
+      geometry = new THREE.CapsuleGeometry(radius, straightLength, 2, 8);
+      this.railGeometries.set(key, geometry);
+    }
+    const mesh = new THREE.Mesh(geometry, material);
+    mesh.rotation[axis === 'x' ? 'z' : 'x'] = Math.PI / 2;
     return mesh;
+  }
+
+  private roundingFor(size: { x: number; y: number; z: number }): number {
+    return Math.max(0.035, Math.min(0.16, size.x * 0.045, size.y * 0.3, size.z * 0.13));
   }
 
   private material(color: string, role: string, palette: SurfacePalette, emissive = '#000000', emissiveIntensity = 0): THREE.MeshStandardMaterial {
@@ -139,7 +169,7 @@ export class SurfaceSkinFactory {
         emissiveIntensity,
         roughness: palette.roughness,
         metalness: palette.metalness,
-        flatShading: true,
+        flatShading: false,
       });
       this.materials.set(key, material);
     }

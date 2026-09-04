@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
 import type { LevelDefinition } from '../levels/types';
 import { WORLD_META } from '../levels/worldMeta';
 
@@ -41,15 +42,16 @@ export function createWorldScene(scene: THREE.Scene, level: LevelDefinition): TH
 }
 
 function addBeach(group: THREE.Group, adventure: boolean): void {
-  const water = standard('#129fca', 0.28, true, 0.78);
+  const water = standard('#1aaec5', 0.28, true, 0.74);
   const distantSand = standard('#efbb62', 0.92);
   const trunk = standard('#9c673d', 0.9);
   const leaf = standard(adventure ? '#218d71' : '#37a66f', 0.82);
-  addMesh(group, new THREE.BoxGeometry(58, 1.2, 0.38), water, 7, -1.32, -2.5);
+  const leafShade = standard(adventure ? '#146f59' : '#25855c', 0.86);
+  addMesh(group, new RoundedBoxGeometry(58, 1.18, 0.46, 3, 0.22), water, 7, -1.32, -2.5);
   const foam = basic('#d7faff', true, 0.5);
   [-13, -1, 11, 24, 36].forEach((x, index) => {
-    const wave = addMesh(group, new THREE.BoxGeometry(4.4, 0.055, 0.04), foam, x, -0.77 + (index % 2) * 0.16, -2.27);
-    wave.rotation.z = index % 2 ? -0.03 : 0.025;
+    const wave = addMesh(group, new THREE.CapsuleGeometry(0.032, 4.15, 2, 8), foam, x, -0.77 + (index % 2) * 0.16, -2.27);
+    wave.rotation.z = Math.PI / 2 + (index % 2 ? -0.03 : 0.025);
   });
 
   const duneGeometry = new THREE.SphereGeometry(1, 12, 8);
@@ -61,13 +63,23 @@ function addBeach(group: THREE.Group, adventure: boolean): void {
   const cloudMaterial = basic('#ffffff', true, 0.66);
   [-12, 2, 17, 30].forEach((x, index) => addCloud(group, x, 4.25 + (index % 2) * 0.65, cloudMaterial));
   const palmXs = adventure ? [-10, 7, 25] : [-14, 13, 29];
+  const palmLeafGeometry = new THREE.CapsuleGeometry(0.13, 0.86, 3, 6);
   palmXs.forEach((x, index) => {
     const palm = new THREE.Group();
-    const stem = addMesh(palm, new THREE.CylinderGeometry(0.13, 0.2, 2.3, 7), trunk, 0, 0, 0);
+    const stem = addMesh(palm, new THREE.CylinderGeometry(0.13, 0.2, 2.3, 8), trunk, 0, 0, 0);
     stem.rotation.z = index % 2 === 0 ? -0.12 : 0.1;
-    for (let leafIndex = 0; leafIndex < 5; leafIndex += 1) {
-      const frond = addMesh(palm, new THREE.ConeGeometry(0.33, 1.4, 5), leaf, 0, 1.15, 0);
-      frond.rotation.z = (leafIndex / 5) * Math.PI * 2;
+    for (let leafIndex = 0; leafIndex < 6; leafIndex += 1) {
+      const spread = -1.12 + leafIndex * 0.45;
+      const frond = addMesh(
+        palm,
+        palmLeafGeometry,
+        leafIndex % 2 === 0 ? leaf : leafShade,
+        Math.sin(spread) * 0.48,
+        1.19 + Math.cos(spread) * 0.22,
+        leafIndex % 2 === 0 ? -0.03 : 0.05,
+      );
+      frond.rotation.z = -spread;
+      frond.rotation.x = leafIndex % 2 === 0 ? -0.11 : 0.11;
     }
     palm.position.set(x, 0.25, -4);
     group.add(palm);
@@ -92,12 +104,12 @@ function addWood(group: THREE.Group, adventure: boolean): void {
   const maple = standard('#e0aa68', 0.84);
   const blue = standard('#5f9fc1', 0.75);
   const red = standard('#d86d58', 0.75);
-  addMesh(group, new THREE.BoxGeometry(60, 1.7, 0.5), bench, 7, -1.65, -3.7);
-  addMesh(group, new THREE.BoxGeometry(60, 0.22, 0.42), maple, 7, 4.85, -5);
+  addMesh(group, new RoundedBoxGeometry(60, 1.7, 0.5, 2, 0.18), bench, 7, -1.65, -3.7);
+  addMesh(group, new RoundedBoxGeometry(60, 0.22, 0.42, 2, 0.08), maple, 7, 4.85, -5);
   const seam = standard('#8b4f35', 0.92);
   [-17, -9, -1, 7, 15, 23, 31].forEach((x) => addMesh(group, new THREE.BoxGeometry(0.12, 1.82, 0.03), seam, x, -1.64, -3.43));
 
-  const blockGeometry = new THREE.BoxGeometry(1.25, 1.25, 1.25);
+  const blockGeometry = new RoundedBoxGeometry(1.25, 1.25, 1.25, 2, 0.14);
   [-15, -6, 4, 14, 25, 33].forEach((x, index) => {
     const material = index % 3 === 0 ? red : index % 2 === 0 ? blue : maple;
     const block = addMesh(group, blockGeometry, material, x, -0.3 + (index % 2) * 0.45, -4.2);
